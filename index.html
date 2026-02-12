@@ -351,6 +351,39 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
   transform: scale(1.1);
 }
 
+
+#frog-trainer {
+  max-width: 320px;
+  background: rgba(18, 30, 24, 0.95);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: 10px;
+  display: none;
+  color: #e8f5e9;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+#frog-trainer.show {
+  display: block;
+}
+
+#frog-trainer-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+#frog-trainer button {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+}
+
+#frog-trainer-score {
+  margin-top: 6px;
+  color: #ffd700;
+}
 #frog-count-badge {
   background: #1a1a2e;
   color: #ffd700;
@@ -414,6 +447,7 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
   <div>Balance: $<span id="balance">1000</span></div>
   <div>Bet: $<span id="current-bet">0</span></div>
   <div>Cards left: <span id="cards-left">156</span></div>
+  <div>Stand win odds: <span id="win-odds">--</span></div>
 </div>
 
 <div id="table">
@@ -471,6 +505,15 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
 
 <div id="frog-assistant">
   <div id="frog-speech" onclick="hideFrogSpeech()"></div>
+  <div id="frog-trainer">
+    <div id="frog-trainer-prompt"></div>
+    <div id="frog-trainer-buttons">
+      <button onclick="submitCountAnswer(1)">+1</button>
+      <button onclick="submitCountAnswer(0)">0</button>
+      <button onclick="submitCountAnswer(-1)">-1</button>
+    </div>
+    <div id="frog-trainer-score"></div>
+  </div>
   <div id="frog-avatar-row">
     <div id="frog-count-badge"></div>
     <div id="frog-avatar" onclick="frogGreet()">&#x1F438;</div>
@@ -582,6 +625,68 @@ function isBlackjack(cards) {
   return cards.length === 2 && handValue(cards) === 21;
 }
 
+function drawRandomFromDeck(deck) {
+  const idx = Math.floor(Math.random() * deck.length);
+  return deck.splice(idx, 1)[0];
+}
+
+function simulateDealerFinal(dealerCards, deck) {
+  while (true) {
+    const val = handValue(dealerCards);
+    const soft = isSoft(dealerCards);
+    if (val < 17 || (val === 17 && soft)) {
+      if (!deck.length) return val;
+      dealerCards.push(drawRandomFromDeck(deck));
+    } else {
+      return val;
+    }
+  }
+}
+
+function estimateStandWinOdds(hand, iterations) {
+  if (!hand || hand.length === 0) return null;
+  const playerTotal = handValue(hand);
+  if (playerTotal > 21) return { winPct: 0, avoidLosePct: 0 };
+
+  const unknownDeck = shoe.slice();
+  if (gamePhase === 'playing' && dealerHand.length > 1) {
+    unknownDeck.push(dealerHand[1]);
+  }
+
+  if (unknownDeck.length === 0 || dealerHand.length === 0) return null;
+
+  let wins = 0;
+  let pushes = 0;
+  for (let i = 0; i < iterations; i++) {
+    const simDeck = unknownDeck.slice();
+    const simDealer = [dealerHand[0], drawRandomFromDeck(simDeck)];
+    const dealerTotal = simulateDealerFinal(simDealer, simDeck);
+
+    if (dealerTotal > 21 || playerTotal > dealerTotal) wins++;
+    else if (dealerTotal === playerTotal) pushes++;
+  }
+
+  return {
+    winPct: Math.round((wins / iterations) * 1000) / 10,
+    avoidLosePct: Math.round(((wins + pushes) / iterations) * 1000) / 10
+  };
+}
+
+function updateWinOdds() {
+  const el = document.getElementById('win-odds');
+  if (!el) return;
+  if (gamePhase !== 'playing') {
+    el.textContent = '--';
+    return;
+  }
+  const odds = estimateStandWinOdds(playerHands[activeHandIndex], 500);
+  if (!odds) {
+    el.textContent = '--';
+    return;
+  }
+  el.textContent = odds.winPct + '% (push+win ' + odds.avoidLosePct + '%)';
+}
+
 // ============ CARD RENDERING ============
 
 function cardHTML(card, faceDown) {
@@ -665,6 +770,7 @@ function renderPlayerHands() {
       container.appendChild(div);
     });
   }
+  updateWinOdds();
 }
 
 function setMessage(text, cls) {
@@ -784,6 +890,7 @@ function deal() {
   }
 
   setButtons();
+  updateWinOdds();
   frogDealHint();
 }
 
@@ -925,6 +1032,7 @@ function actionSplit() {
 
 function dealerTurn() {
   gamePhase = 'dealer';
+  updateWinOdds();
   renderDealerHand(true);
 
   // Count dealer hole card now that it's revealed
@@ -1023,6 +1131,7 @@ function endRound() {
   currentBet = 0;
   updateBalance();
   setButtons();
+  updateWinOdds();
 
   if (balance <= 0) {
     setTimeout(() => {
@@ -1052,6 +1161,8 @@ function resetRound() {
   document.getElementById('split-container').style.display = 'none';
   updateBalance();
   setButtons();
+  updateWinOdds();
+  renderFrogTrainer();
 }
 
 // ============ FROG COUNTING TUTORIAL ============
@@ -1059,6 +1170,58 @@ function resetRound() {
 let frogTutorialEnabled = false;
 let runningCount = 0;
 let frogSpeechTimeout = null;
+let frogLessonQueue = [];
+let currentLessonCard = null;
+let frogLessonScore = { correct: 0, total: 0 };
+
+function resetFrogLesson() {
+  frogLessonQueue = [];
+  currentLessonCard = null;
+  frogLessonScore = { correct: 0, total: 0 };
+  renderFrogTrainer();
+}
+
+function queueFrogLesson(card) {
+  frogLessonQueue.push(card);
+  if (!currentLessonCard) {
+    currentLessonCard = frogLessonQueue.shift();
+  }
+  renderFrogTrainer();
+}
+
+function renderFrogTrainer() {
+  const panel = document.getElementById('frog-trainer');
+  const prompt = document.getElementById('frog-trainer-prompt');
+  const score = document.getElementById('frog-trainer-score');
+  if (!panel || !prompt || !score) return;
+
+  if (!frogTutorialEnabled) {
+    panel.className = '';
+    return;
+  }
+
+  panel.className = 'show';
+  if (currentLessonCard) {
+    prompt.textContent = 'Quick count check: ' + currentLessonCard.rank + currentLessonCard.suit + ' is worth what in Hi-Lo?';
+  } else {
+    prompt.textContent = 'No new cards to quiz right now. Keep playing and I will keep testing you!';
+  }
+  score.textContent = 'Trainer score: ' + frogLessonScore.correct + '/' + frogLessonScore.total;
+}
+
+function submitCountAnswer(answer) {
+  if (!frogTutorialEnabled || !currentLessonCard) return;
+  const expected = getCountValue(currentLessonCard.rank);
+  frogLessonScore.total += 1;
+  if (answer === expected) {
+    frogLessonScore.correct += 1;
+    showFrogSpeech('Correct! ' + currentLessonCard.rank + currentLessonCard.suit + ' counts as ' + (expected > 0 ? '+1' : expected < 0 ? '-1' : '0') + '.', 'info', 3000);
+  } else {
+    showFrogSpeech('Not quite. ' + currentLessonCard.rank + currentLessonCard.suit + ' is ' + (expected > 0 ? '+1' : expected < 0 ? '-1' : '0') + ' in Hi-Lo.', 'mistake', 4500);
+  }
+  currentLessonCard = frogLessonQueue.shift() || null;
+  renderFrogTrainer();
+}
 
 function getCountValue(rank) {
   if (['2','3','4','5','6'].includes(rank)) return 1;
@@ -1068,6 +1231,7 @@ function getCountValue(rank) {
 
 function countCard(card) {
   runningCount += getCountValue(card.rank);
+  queueFrogLesson(card);
 }
 
 function getTrueCount() {
@@ -1094,9 +1258,11 @@ function toggleFrogTutorial() {
   updateFrogCount();
 
   if (frogTutorialEnabled) {
-    showFrogSpeech("Ribbit! I'm Freddy the Counting Frog! I'll teach you Hi-Lo counting.\n\nCards 2-6 = +1 (low cards)\nCards 7-9 = 0 (neutral)\nCards 10-A = -1 (high cards)\n\nWatch the badges on each card!", 'info', 10000);
+    resetFrogLesson();
+    showFrogSpeech("Ribbit! I'm Freddy the Counting Frog! Let's practice real counting.\n\nHi-Lo rules:\n2-6 = +1\n7-9 = 0\n10-A = -1\n\nI'll quiz you on every visible card in the trainer panel.", 'info', 10000);
   } else {
     hideFrogSpeech();
+    resetFrogLesson();
   }
 }
 
@@ -1281,7 +1447,9 @@ function frogDealHint() {
   } else {
     hint += "Dealer is strong \u2014 you may need to take risks.";
   }
-  showFrogSpeech(hint, 'info', 5000);
+  const odds = estimateStandWinOdds(playerHands[activeHandIndex], 300);
+  if (odds) hint += ' If you stand now, win chance is about ' + odds.winPct + '%.';
+  showFrogSpeech(hint, 'info', 6000);
 }
 
 // ============ INIT ============
@@ -1289,6 +1457,8 @@ function frogDealHint() {
 createShoe();
 updateBalance();
 setButtons();
+updateWinOdds();
+renderFrogTrainer();
 setMessage('Place your bet to begin!');
 </script>
 
