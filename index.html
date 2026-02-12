@@ -369,6 +369,7 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
 }
 
 #frog-trainer-input-row {
+#frog-trainer-buttons {
   display: flex;
   gap: 6px;
   margin-top: 8px;
@@ -528,6 +529,11 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
       <button onclick="submitTrainerAnswer()">Submit</button>
     </div>
     <div id="frog-trainer-help"></div>
+    <div id="frog-trainer-buttons">
+      <button onclick="submitCountAnswer(1)">+1</button>
+      <button onclick="submitCountAnswer(0)">0</button>
+      <button onclick="submitCountAnswer(-1)">-1</button>
+    </div>
     <div id="frog-trainer-score"></div>
   </div>
   <div id="frog-avatar-row">
@@ -1204,6 +1210,76 @@ let lastQuizFingerprint = '';
 
 function formatSigned(num) {
   return (num >= 0 ? '+' : '') + num;
+
+function formatSigned(num) {
+  return (num >= 0 ? '+' : '') + num;
+let frogLessonQueue = [];
+let currentLessonCard = null;
+let frogLessonScore = { correct: 0, total: 0 };
+
+function resetFrogLesson() {
+  frogLessonQueue = [];
+  currentLessonCard = null;
+  frogLessonScore = { correct: 0, total: 0 };
+  renderFrogTrainer();
+}
+
+function queueFrogLesson(card) {
+  frogLessonQueue.push(card);
+  if (!currentLessonCard) {
+    currentLessonCard = frogLessonQueue.shift();
+  }
+  renderFrogTrainer();
+}
+
+function seedFrogLessonFromVisibleCards() {
+  if (!frogTutorialEnabled) return;
+  if (dealerHand.length > 0) {
+    queueFrogLesson(dealerHand[0]);
+    if (gamePhase === 'dealer' || gamePhase === 'done') {
+      for (let i = 1; i < dealerHand.length; i++) {
+        queueFrogLesson(dealerHand[i]);
+      }
+    }
+  }
+  playerHands.forEach(hand => {
+    hand.forEach(card => queueFrogLesson(card));
+  });
+}
+
+function renderFrogTrainer() {
+  const panel = document.getElementById('frog-trainer');
+  const prompt = document.getElementById('frog-trainer-prompt');
+  const score = document.getElementById('frog-trainer-score');
+  if (!panel || !prompt || !score) return;
+
+  if (!frogTutorialEnabled) {
+    panel.className = '';
+    return;
+  }
+
+  panel.className = 'show';
+  if (currentLessonCard) {
+    prompt.textContent = 'Hi-Lo drill: ' + currentLessonCard.rank + currentLessonCard.suit + ' counts as? (2-6:+1, 7-9:0, 10-A:-1)';
+    prompt.textContent = 'Quick count check: ' + currentLessonCard.rank + currentLessonCard.suit + ' is worth what in Hi-Lo?';
+  } else {
+    prompt.textContent = 'No new cards to quiz right now. Keep playing and I will keep testing you!';
+  }
+  score.textContent = 'Trainer score: ' + frogLessonScore.correct + '/' + frogLessonScore.total;
+}
+
+function submitCountAnswer(answer) {
+  if (!frogTutorialEnabled || !currentLessonCard) return;
+  const expected = getCountValue(currentLessonCard.rank);
+  frogLessonScore.total += 1;
+  if (answer === expected) {
+    frogLessonScore.correct += 1;
+    showFrogSpeech('Correct! ' + currentLessonCard.rank + currentLessonCard.suit + ' counts as ' + (expected > 0 ? '+1' : expected < 0 ? '-1' : '0') + '.', 'info', 3000);
+  } else {
+    showFrogSpeech('Not quite. ' + currentLessonCard.rank + currentLessonCard.suit + ' is ' + (expected > 0 ? '+1' : expected < 0 ? '-1' : '0') + ' in Hi-Lo.', 'mistake', 4500);
+  }
+  currentLessonCard = frogLessonQueue.shift() || null;
+  renderFrogTrainer();
 }
 
 function getCountValue(rank) {
@@ -1214,6 +1290,7 @@ function getCountValue(rank) {
 
 function countCard(card) {
   runningCount += getCountValue(card.rank);
+  queueFrogLesson(card);
 }
 
 function getTrueCount() {
@@ -1253,6 +1330,10 @@ function maybeStartCurrentHandQuiz() {
   const visibleDelta = cards.reduce((sum, c) => sum + getCountValue(c.rank), 0);
   buildRunningCountQuiz(runningCount - visibleDelta, cards);
   lastQuizFingerprint = fingerprint;
+}
+
+  playerHands.forEach(hand => hand.forEach(card => cards.push(card)));
+  return cards;
 }
 
 function recomputeRunningCountFromSeenCards() {
@@ -1311,6 +1392,12 @@ function renderFrogTrainer() {
   } else {
     prompt.textContent = 'Quiz 2/2: Previous running count was ' + formatSigned(pendingRunningCountQuiz.startRC) + '. What is the new running count now?';
     help.textContent = 'New running count = previous running count + hand count change (example: +2 + 0 = +2 when dealer shows an 8).';
+    const labels = pendingRunningCountQuiz.cards.map(c => c.rank + c.suit).join(', ');
+    prompt.textContent = 'Quiz 1/2: Visible cards are [' + labels + ']. What is this hand\'s total count change?';
+    help.textContent = 'Add card values using Hi-Lo: 2-6:+1, 7-9:0, 10-A:-1.';
+  } else {
+    prompt.textContent = 'Quiz 2/2: Previous running count was ' + formatSigned(pendingRunningCountQuiz.startRC) + '. What is the new running count now?';
+    help.textContent = 'New running count = previous running count + hand count change.';
   }
 
   score.textContent = 'Trainer score: ' + frogLessonScore.correct + '/' + frogLessonScore.total;
@@ -1372,6 +1459,12 @@ function toggleFrogTutorial() {
     lastQuizFingerprint = '';
     maybeStartCurrentHandQuiz();
     if (!pendingRunningCountQuiz) {
+    const visibleCards = getCurrentHandCardsForQuiz();
+    if (visibleCards.length) {
+      const visibleDelta = visibleCards.reduce((sum, c) => sum + getCountValue(c.rank), 0);
+      buildRunningCountQuiz(runningCount - visibleDelta, visibleCards);
+    } else {
+      pendingRunningCountQuiz = null;
       runningCountRevealed = true;
       renderFrogTrainer();
     }
@@ -1381,6 +1474,14 @@ function toggleFrogTutorial() {
     runningCountRevealed = true;
     lastQuizFingerprint = '';
     renderFrogTrainer();
+    renderFrogTrainer();
+    resetFrogLesson();
+    seedFrogLessonFromVisibleCards();
+    showFrogSpeech("Ribbit! I'm Freddy the Counting Frog! Let's practice real counting.\n\nHi-Lo rules:\n2-6 = +1\n7-9 = 0\n10-A = -1\n\nI'll quiz you on each visible card, then on every new card that appears.", 'info', 10000);
+    showFrogSpeech("Ribbit! I'm Freddy the Counting Frog! Let's practice real counting.\n\nHi-Lo rules:\n2-6 = +1\n7-9 = 0\n10-A = -1\n\nI'll quiz you on every visible card in the trainer panel.", 'info', 10000);
+  } else {
+    hideFrogSpeech();
+    resetFrogLesson();
   }
 
   updateFrogCount();
@@ -1567,6 +1668,8 @@ function frogDealHint() {
   if (odds) hint += ' If you stand now, win chance is about ' + odds.winPct + '% (win/push ' + odds.avoidLosePct + '%).';
   if (runningCountRevealed) hint += ' RC ' + formatSigned(runningCount) + ': ' + getRunningCountMeaning(runningCount);
   showFrogSpeech(hint, 'info', 7000);
+  if (odds) hint += ' If you stand now, win chance is about ' + odds.winPct + '%.';
+  showFrogSpeech(hint, 'info', 6000);
 }
 
 // ============ INIT ============
