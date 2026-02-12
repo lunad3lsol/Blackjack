@@ -1218,6 +1218,7 @@ function renderFrogTrainer() {
   panel.className = 'show';
   if (currentLessonCard) {
     prompt.textContent = 'Hi-Lo drill: ' + currentLessonCard.rank + currentLessonCard.suit + ' counts as? (2-6:+1, 7-9:0, 10-A:-1)';
+    prompt.textContent = 'Quick count check: ' + currentLessonCard.rank + currentLessonCard.suit + ' is worth what in Hi-Lo?';
   } else {
     prompt.textContent = 'No new cards to quiz right now. Keep playing and I will keep testing you!';
   }
@@ -1276,6 +1277,7 @@ function toggleFrogTutorial() {
     resetFrogLesson();
     seedFrogLessonFromVisibleCards();
     showFrogSpeech("Ribbit! I'm Freddy the Counting Frog! Let's practice real counting.\n\nHi-Lo rules:\n2-6 = +1\n7-9 = 0\n10-A = -1\n\nI'll quiz you on each visible card, then on every new card that appears.", 'info', 10000);
+    showFrogSpeech("Ribbit! I'm Freddy the Counting Frog! Let's practice real counting.\n\nHi-Lo rules:\n2-6 = +1\n7-9 = 0\n10-A = -1\n\nI'll quiz you on every visible card in the trainer panel.", 'info', 10000);
   } else {
     hideFrogSpeech();
     resetFrogLesson();
@@ -1465,6 +1467,7 @@ function frogDealHint() {
   }
   const odds = estimateStandWinOdds(playerHands[activeHandIndex], 300);
   if (odds) hint += ' If you stand now, win chance is about ' + odds.winPct + '% (win/push ' + odds.avoidLosePct + '%).';
+  if (odds) hint += ' If you stand now, win chance is about ' + odds.winPct + '%.';
   showFrogSpeech(hint, 'info', 6000);
 }
 
