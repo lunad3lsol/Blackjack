@@ -236,16 +236,235 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
   border-color: #ffd700;
   box-shadow: 0 0 12px rgba(255,215,0,0.3);
 }
+
+/* ============ FROG COUNTING TUTORIAL ============ */
+
+#frog-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 0;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: #555;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.toggle-switch.active {
+  background: #27ae60;
+}
+
+.toggle-switch .toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.3s;
+}
+
+.toggle-switch.active .toggle-knob {
+  left: 22px;
+}
+
+#frog-toggle-label {
+  font-size: 13px;
+  color: #aed4a0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#frog-assistant {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999;
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+#frog-speech {
+  max-width: 310px;
+  background: #fff;
+  color: #333;
+  padding: 12px 16px;
+  border-radius: 16px 16px 4px 16px;
+  font-size: 13px;
+  font-family: 'Georgia', serif;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  cursor: pointer;
+  display: none;
+  line-height: 1.5;
+}
+
+#frog-speech.show {
+  display: block;
+  animation: frogBubbleIn 0.3s ease-out;
+}
+
+#frog-speech.mistake {
+  border-left: 4px solid #e74c3c;
+}
+
+#frog-speech.info {
+  border-left: 4px solid #3498db;
+}
+
+@keyframes frogBubbleIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#frog-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#frog-avatar {
+  width: 70px;
+  height: 70px;
+  background: radial-gradient(circle at 40% 35%, #4CAF50, #2E7D32);
+  border-radius: 50% 50% 45% 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  border: 3px solid #388E3C;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+#frog-avatar:hover {
+  transform: scale(1.1);
+}
+
+
+#frog-trainer {
+  max-width: 320px;
+  background: rgba(18, 30, 24, 0.95);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: 10px;
+  display: none;
+  color: #e8f5e9;
+  font-size: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+#frog-trainer.show {
+  display: block;
+}
+
+#frog-trainer-input-row {
+#frog-trainer-buttons {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+#frog-trainer-input {
+  width: 90px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: #0f1c16;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+}
+
+#frog-trainer button {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+}
+
+#frog-trainer-help {
+  margin-top: 6px;
+  color: #bde8c5;
+  line-height: 1.35;
+}
+
+#frog-trainer-score {
+  margin-top: 6px;
+  color: #ffd700;
+}
+#frog-count-badge {
+  background: #1a1a2e;
+  color: #ffd700;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  white-space: nowrap;
+  display: none;
+  font-family: 'Courier New', monospace;
+}
+
+.card-count-overlay {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  font-family: Arial, sans-serif;
+  border: 1.5px solid rgba(255,255,255,0.8);
+  line-height: 1;
+}
+
+.card-count-overlay.count-plus {
+  background: #27ae60;
+  color: #fff;
+}
+
+.card-count-overlay.count-zero {
+  background: #7f8c8d;
+  color: #fff;
+}
+
+.card-count-overlay.count-minus {
+  background: #e74c3c;
+  color: #fff;
+}
 </style>
 </head>
 <body>
 
 <h1>BLACKJACK</h1>
 
+<div id="frog-toggle-wrap">
+  <div class="toggle-switch" id="frog-toggle" onclick="toggleFrogTutorial()">
+    <div class="toggle-knob"></div>
+  </div>
+  <span id="frog-toggle-label" onclick="toggleFrogTutorial()">&#x1F438; Counting Tutor</span>
+</div>
+
 <div id="info-bar">
   <div>Balance: $<span id="balance">1000</span></div>
   <div>Bet: $<span id="current-bet">0</span></div>
   <div>Cards left: <span id="cards-left">156</span></div>
+  <div>Stand win odds: <span id="win-odds">--</span></div>
 </div>
 
 <div id="table">
@@ -301,6 +520,28 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
   <div id="shoe-info"></div>
 </div>
 
+<div id="frog-assistant">
+  <div id="frog-speech" onclick="hideFrogSpeech()"></div>
+  <div id="frog-trainer">
+    <div id="frog-trainer-prompt"></div>
+    <div id="frog-trainer-input-row">
+      <input id="frog-trainer-input" type="number" step="1" placeholder="Answer" />
+      <button onclick="submitTrainerAnswer()">Submit</button>
+    </div>
+    <div id="frog-trainer-help"></div>
+    <div id="frog-trainer-buttons">
+      <button onclick="submitCountAnswer(1)">+1</button>
+      <button onclick="submitCountAnswer(0)">0</button>
+      <button onclick="submitCountAnswer(-1)">-1</button>
+    </div>
+    <div id="frog-trainer-score"></div>
+  </div>
+  <div id="frog-avatar-row">
+    <div id="frog-count-badge"></div>
+    <div id="frog-avatar" onclick="frogGreet()">&#x1F438;</div>
+  </div>
+</div>
+
 <script>
 // ============ SHOE & DECK LOGIC (3-deck shoe, realistic) ============
 
@@ -318,6 +559,7 @@ function createShoe() {
   shoe = [];
   discardPile = [];
   needsReshuffle = false;
+  runningCount = 0;
   for (let d = 0; d < NUM_DECKS; d++) {
     for (const suit of SUITS) {
       for (const rank of RANKS) {
@@ -327,6 +569,7 @@ function createShoe() {
   }
   shuffleArray(shoe);
   updateShoeInfo();
+  updateFrogCount();
 }
 
 function shuffleArray(arr) {
@@ -343,7 +586,9 @@ function checkReshuffle() {
     discardPile = [];
     shuffleArray(shoe);
     needsReshuffle = false;
+    runningCount = 0;
     updateShoeInfo();
+    updateFrogCount();
     return true; // signals that a reshuffle happened
   }
   return false;
@@ -402,6 +647,68 @@ function isBlackjack(cards) {
   return cards.length === 2 && handValue(cards) === 21;
 }
 
+function drawRandomFromDeck(deck) {
+  const idx = Math.floor(Math.random() * deck.length);
+  return deck.splice(idx, 1)[0];
+}
+
+function simulateDealerFinal(dealerCards, deck) {
+  while (true) {
+    const val = handValue(dealerCards);
+    const soft = isSoft(dealerCards);
+    if (val < 17 || (val === 17 && soft)) {
+      if (!deck.length) return val;
+      dealerCards.push(drawRandomFromDeck(deck));
+    } else {
+      return val;
+    }
+  }
+}
+
+function estimateStandWinOdds(hand, iterations) {
+  if (!hand || hand.length === 0) return null;
+  const playerTotal = handValue(hand);
+  if (playerTotal > 21) return { winPct: 0, avoidLosePct: 0 };
+
+  const unknownDeck = shoe.slice();
+  if (gamePhase === 'playing' && dealerHand.length > 1) {
+    unknownDeck.push(dealerHand[1]);
+  }
+
+  if (unknownDeck.length === 0 || dealerHand.length === 0) return null;
+
+  let wins = 0;
+  let pushes = 0;
+  for (let i = 0; i < iterations; i++) {
+    const simDeck = unknownDeck.slice();
+    const simDealer = [dealerHand[0], drawRandomFromDeck(simDeck)];
+    const dealerTotal = simulateDealerFinal(simDealer, simDeck);
+
+    if (dealerTotal > 21 || playerTotal > dealerTotal) wins++;
+    else if (dealerTotal === playerTotal) pushes++;
+  }
+
+  return {
+    winPct: Math.round((wins / iterations) * 1000) / 10,
+    avoidLosePct: Math.round(((wins + pushes) / iterations) * 1000) / 10
+  };
+}
+
+function updateWinOdds() {
+  const el = document.getElementById('win-odds');
+  if (!el) return;
+  if (gamePhase !== 'playing') {
+    el.textContent = '--';
+    return;
+  }
+  const odds = estimateStandWinOdds(playerHands[activeHandIndex], 500);
+  if (!odds) {
+    el.textContent = '--';
+    return;
+  }
+  el.textContent = odds.winPct + '% (push+win ' + odds.avoidLosePct + '%)';
+}
+
 // ============ CARD RENDERING ============
 
 function cardHTML(card, faceDown) {
@@ -409,10 +716,18 @@ function cardHTML(card, faceDown) {
     return '<div class="card face-down"></div>';
   }
   const color = SUIT_COLOR[card.suit];
+  let overlay = '';
+  if (frogTutorialEnabled) {
+    const cv = getCountValue(card.rank);
+    const cvClass = cv > 0 ? 'count-plus' : cv < 0 ? 'count-minus' : 'count-zero';
+    const cvText = cv > 0 ? '+1' : cv < 0 ? '\u22121' : '0';
+    overlay = `<div class="card-count-overlay ${cvClass}">${cvText}</div>`;
+  }
   return `<div class="card ${color}">
     <div class="top">${card.rank}${card.suit}</div>
     <div class="center">${card.suit}</div>
     <div class="bottom">${card.rank}${card.suit}</div>
+    ${overlay}
   </div>`;
 }
 
@@ -477,6 +792,7 @@ function renderPlayerHands() {
       container.appendChild(div);
     });
   }
+  updateWinOdds();
 }
 
 function setMessage(text, cls) {
@@ -559,6 +875,16 @@ function deal() {
 
   dealerHand = [drawCard(), drawCard()];
   playerHands = [[drawCard(), drawCard()]];
+  roundStartRunningCount = runningCount;
+
+  // Count visible cards (dealer up card + both player cards; dealer hole card counted on reveal)
+  if (frogTutorialEnabled) {
+    countCard(dealerHand[0]);
+    countCard(playerHands[0][0]);
+    countCard(playerHands[0][1]);
+    buildRunningCountQuiz(roundStartRunningCount, [dealerHand[0], playerHands[0][0], playerHands[0][1]]);
+    updateFrogCount();
+  }
 
   renderDealerHand(false);
   renderPlayerHands();
@@ -569,6 +895,11 @@ function deal() {
 
   if (playerBJ || dealerBJ) {
     renderDealerHand(true);
+    // Count dealer hole card on reveal
+    if (frogTutorialEnabled) {
+      countCard(dealerHand[1]);
+      updateFrogCount();
+    }
     if (playerBJ && dealerBJ) {
       setMessage('Both Blackjack - Push!', 'push');
       balance += currentBet;
@@ -583,14 +914,21 @@ function deal() {
   }
 
   setButtons();
+  updateWinOdds();
+  frogDealHint();
 }
 
 // ============ PLAYER ACTIONS ============
 
 function actionHit() {
   if (gamePhase !== 'playing') return;
+  checkPlayerAction('hit');
   const hand = playerHands[activeHandIndex];
   hand.push(drawCard());
+  if (frogTutorialEnabled) {
+    countCard(hand[hand.length - 1]);
+    updateFrogCount();
+  }
   renderPlayerHands();
 
   if (handValue(hand) > 21) {
@@ -600,6 +938,10 @@ function actionHit() {
       // Deal second card to next hand if needed
       if (playerHands[activeHandIndex].length === 1) {
         playerHands[activeHandIndex].push(drawCard());
+        if (frogTutorialEnabled) {
+          countCard(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1]);
+          updateFrogCount();
+        }
       }
       renderPlayerHands();
       setButtons();
@@ -615,10 +957,15 @@ function actionHit() {
 
 function actionStand() {
   if (gamePhase !== 'playing') return;
+  checkPlayerAction('stand');
   if (splitMode && activeHandIndex < playerHands.length - 1) {
     activeHandIndex++;
     if (playerHands[activeHandIndex].length === 1) {
       playerHands[activeHandIndex].push(drawCard());
+      if (frogTutorialEnabled) {
+        countCard(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1]);
+        updateFrogCount();
+      }
     }
     renderPlayerHands();
     setButtons();
@@ -629,6 +976,7 @@ function actionStand() {
 
 function actionDouble() {
   if (gamePhase !== 'playing') return;
+  checkPlayerAction('double');
   const hand = playerHands[activeHandIndex];
   if (hand.length !== 2) return;
 
@@ -645,6 +993,10 @@ function actionDouble() {
   updateBalance();
 
   hand.push(drawCard());
+  if (frogTutorialEnabled) {
+    countCard(hand[hand.length - 1]);
+    updateFrogCount();
+  }
   renderPlayerHands();
 
   // Automatic stand after double
@@ -652,6 +1004,10 @@ function actionDouble() {
     activeHandIndex++;
     if (playerHands[activeHandIndex].length === 1) {
       playerHands[activeHandIndex].push(drawCard());
+      if (frogTutorialEnabled) {
+        countCard(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1]);
+        updateFrogCount();
+      }
     }
     renderPlayerHands();
     setButtons();
@@ -662,6 +1018,7 @@ function actionDouble() {
 
 function actionSplit() {
   if (gamePhase !== 'playing') return;
+  checkPlayerAction('split');
   const hand = playerHands[0];
   if (hand.length !== 2 || hand[0].rank !== hand[1].rank) return;
   if (balance < currentBet) return;
@@ -676,6 +1033,13 @@ function actionSplit() {
   ];
   playerHands.doubled = {};
   activeHandIndex = 0;
+
+  // Count the two new cards dealt to split hands
+  if (frogTutorialEnabled) {
+    countCard(playerHands[0][1]);
+    countCard(playerHands[1][1]);
+    updateFrogCount();
+  }
 
   renderPlayerHands();
 
@@ -692,7 +1056,14 @@ function actionSplit() {
 
 function dealerTurn() {
   gamePhase = 'dealer';
+  updateWinOdds();
   renderDealerHand(true);
+
+  // Count dealer hole card now that it's revealed
+  if (frogTutorialEnabled) {
+    countCard(dealerHand[1]);
+    updateFrogCount();
+  }
 
   // Check if all player hands busted
   const allBusted = playerHands.every(h => handValue(h) > 21);
@@ -707,6 +1078,10 @@ function dealerTurn() {
     const soft = isSoft(dealerHand);
     if (val < 17 || (val === 17 && soft)) {
       dealerHand.push(drawCard());
+      if (frogTutorialEnabled) {
+        countCard(dealerHand[dealerHand.length - 1]);
+        updateFrogCount();
+      }
       renderDealerHand(true);
       setTimeout(dealerDraw, 400);
     } else {
@@ -780,6 +1155,7 @@ function endRound() {
   currentBet = 0;
   updateBalance();
   setButtons();
+  updateWinOdds();
 
   if (balance <= 0) {
     setTimeout(() => {
@@ -809,6 +1185,446 @@ function resetRound() {
   document.getElementById('split-container').style.display = 'none';
   updateBalance();
   setButtons();
+  pendingRunningCountQuiz = null;
+  runningCountRevealed = true;
+  updateWinOdds();
+  renderFrogTrainer();
+}
+
+// ============ FROG COUNTING TUTORIAL ============
+
+let frogTutorialEnabled = false;
+let runningCount = 0;
+let frogSpeechTimeout = null;
+let frogLessonScore = { correct: 0, total: 0 };
+let pendingRunningCountQuiz = null;
+let runningCountRevealed = true;
+let roundStartRunningCount = 0;
+
+function formatSigned(num) {
+  return (num >= 0 ? '+' : '') + num;
+let frogLessonQueue = [];
+let currentLessonCard = null;
+let frogLessonScore = { correct: 0, total: 0 };
+
+function resetFrogLesson() {
+  frogLessonQueue = [];
+  currentLessonCard = null;
+  frogLessonScore = { correct: 0, total: 0 };
+  renderFrogTrainer();
+}
+
+function queueFrogLesson(card) {
+  frogLessonQueue.push(card);
+  if (!currentLessonCard) {
+    currentLessonCard = frogLessonQueue.shift();
+  }
+  renderFrogTrainer();
+}
+
+function seedFrogLessonFromVisibleCards() {
+  if (!frogTutorialEnabled) return;
+  if (dealerHand.length > 0) {
+    queueFrogLesson(dealerHand[0]);
+    if (gamePhase === 'dealer' || gamePhase === 'done') {
+      for (let i = 1; i < dealerHand.length; i++) {
+        queueFrogLesson(dealerHand[i]);
+      }
+    }
+  }
+  playerHands.forEach(hand => {
+    hand.forEach(card => queueFrogLesson(card));
+  });
+}
+
+function renderFrogTrainer() {
+  const panel = document.getElementById('frog-trainer');
+  const prompt = document.getElementById('frog-trainer-prompt');
+  const score = document.getElementById('frog-trainer-score');
+  if (!panel || !prompt || !score) return;
+
+  if (!frogTutorialEnabled) {
+    panel.className = '';
+    return;
+  }
+
+  panel.className = 'show';
+  if (currentLessonCard) {
+    prompt.textContent = 'Hi-Lo drill: ' + currentLessonCard.rank + currentLessonCard.suit + ' counts as? (2-6:+1, 7-9:0, 10-A:-1)';
+    prompt.textContent = 'Quick count check: ' + currentLessonCard.rank + currentLessonCard.suit + ' is worth what in Hi-Lo?';
+  } else {
+    prompt.textContent = 'No new cards to quiz right now. Keep playing and I will keep testing you!';
+  }
+  score.textContent = 'Trainer score: ' + frogLessonScore.correct + '/' + frogLessonScore.total;
+}
+
+function submitCountAnswer(answer) {
+  if (!frogTutorialEnabled || !currentLessonCard) return;
+  const expected = getCountValue(currentLessonCard.rank);
+  frogLessonScore.total += 1;
+  if (answer === expected) {
+    frogLessonScore.correct += 1;
+    showFrogSpeech('Correct! ' + currentLessonCard.rank + currentLessonCard.suit + ' counts as ' + (expected > 0 ? '+1' : expected < 0 ? '-1' : '0') + '.', 'info', 3000);
+  } else {
+    showFrogSpeech('Not quite. ' + currentLessonCard.rank + currentLessonCard.suit + ' is ' + (expected > 0 ? '+1' : expected < 0 ? '-1' : '0') + ' in Hi-Lo.', 'mistake', 4500);
+  }
+  currentLessonCard = frogLessonQueue.shift() || null;
+  renderFrogTrainer();
+}
+
+function getCountValue(rank) {
+  if (['2','3','4','5','6'].includes(rank)) return 1;
+  if (['7','8','9'].includes(rank)) return 0;
+  return -1; // 10, J, Q, K, A
+}
+
+function countCard(card) {
+  runningCount += getCountValue(card.rank);
+  queueFrogLesson(card);
+}
+
+function getTrueCount() {
+  const decksRemaining = shoe.length / 52;
+  if (decksRemaining < 0.5) return runningCount;
+  return Math.round((runningCount / decksRemaining) * 10) / 10;
+}
+
+function getRunningCountMeaning(rc) {
+  if (rc >= 3) return 'A positive running count means more low cards have already come out, so the remaining shoe is richer in 10s and Aces.';
+  if (rc <= -3) return 'A negative running count means more high cards have already come out, so the remaining shoe is richer in low cards.';
+  return 'A running count near zero means the shoe is close to neutral right now.';
+}
+
+function getCurrentHandCardsForQuiz() {
+  const cards = [];
+  if (dealerHand.length > 0) cards.push(dealerHand[0]);
+  playerHands.forEach(hand => hand.forEach(card => cards.push(card)));
+  return cards;
+}
+
+function recomputeRunningCountFromSeenCards() {
+  let total = 0;
+  discardPile.forEach(card => { total += getCountValue(card.rank); });
+
+  if (dealerHand.length > 0) {
+    total += getCountValue(dealerHand[0].rank);
+    if (gamePhase === 'dealer' || gamePhase === 'done') {
+      for (let i = 1; i < dealerHand.length; i++) total += getCountValue(dealerHand[i].rank);
+    }
+  }
+
+  playerHands.forEach(hand => {
+    hand.forEach(card => { total += getCountValue(card.rank); });
+  });
+
+  runningCount = total;
+}
+
+function buildRunningCountQuiz(startRC, cards) {
+  if (!cards || !cards.length) return;
+  const handDelta = cards.reduce((sum, c) => sum + getCountValue(c.rank), 0);
+  pendingRunningCountQuiz = {
+    stage: 'handDelta',
+    startRC,
+    cards,
+    handDelta,
+    expectedRC: startRC + handDelta
+  };
+  runningCountRevealed = false;
+  renderFrogTrainer();
+}
+
+function renderFrogTrainer() {
+  const panel = document.getElementById('frog-trainer');
+  const prompt = document.getElementById('frog-trainer-prompt');
+  const score = document.getElementById('frog-trainer-score');
+  const help = document.getElementById('frog-trainer-help');
+  const input = document.getElementById('frog-trainer-input');
+  if (!panel || !prompt || !score || !help || !input) return;
+
+  if (!frogTutorialEnabled) {
+    panel.className = '';
+    return;
+  }
+
+  panel.className = 'show';
+  if (!pendingRunningCountQuiz) {
+    prompt.textContent = 'No active quiz. Deal a hand and I will quiz you on the hand count and running count.';
+    help.textContent = 'Running count = previous running count + values from visible cards (2-6:+1, 7-9:0, 10-A:-1).';
+  } else if (pendingRunningCountQuiz.stage === 'handDelta') {
+    const labels = pendingRunningCountQuiz.cards.map(c => c.rank + c.suit).join(', ');
+    prompt.textContent = 'Quiz 1/2: Visible cards are [' + labels + ']. What is this hand\'s total count change?';
+    help.textContent = 'Add card values using Hi-Lo: 2-6:+1, 7-9:0, 10-A:-1.';
+  } else {
+    prompt.textContent = 'Quiz 2/2: Previous running count was ' + formatSigned(pendingRunningCountQuiz.startRC) + '. What is the new running count now?';
+    help.textContent = 'New running count = previous running count + hand count change.';
+  }
+
+  score.textContent = 'Trainer score: ' + frogLessonScore.correct + '/' + frogLessonScore.total;
+}
+
+function submitTrainerAnswer() {
+  if (!frogTutorialEnabled || !pendingRunningCountQuiz) return;
+  const input = document.getElementById('frog-trainer-input');
+  const answer = parseInt(input.value, 10);
+  if (isNaN(answer)) {
+    showFrogSpeech('Enter a whole-number answer first (like -1, 0, +2).', 'mistake', 3000);
+    return;
+  }
+
+  frogLessonScore.total += 1;
+  if (pendingRunningCountQuiz.stage === 'handDelta') {
+    const expected = pendingRunningCountQuiz.handDelta;
+    if (answer === expected) {
+      frogLessonScore.correct += 1;
+      showFrogSpeech('Correct. This hand changes the count by ' + formatSigned(expected) + '. Now compute the new running count.', 'info', 4000);
+    } else {
+      showFrogSpeech('Close, but this hand\'s count change is ' + formatSigned(expected) + '. Now use that to find the running count.', 'mistake', 4500);
+    }
+    pendingRunningCountQuiz.stage = 'runningCount';
+  } else {
+    const expected = pendingRunningCountQuiz.expectedRC;
+    if (answer === expected) {
+      frogLessonScore.correct += 1;
+      showFrogSpeech('Nice! Running count is ' + formatSigned(expected) + '. ' + getRunningCountMeaning(expected), 'info', 6500);
+    } else {
+      showFrogSpeech('The running count is ' + formatSigned(expected) + '. ' + getRunningCountMeaning(expected), 'mistake', 6500);
+    }
+    pendingRunningCountQuiz = null;
+    runningCountRevealed = true;
+    updateFrogCount();
+  }
+
+  input.value = '';
+  renderFrogTrainer();
+}
+
+function toggleFrogTutorial() {
+  frogTutorialEnabled = !frogTutorialEnabled;
+  const toggle = document.getElementById('frog-toggle');
+  const assistant = document.getElementById('frog-assistant');
+
+  toggle.classList.toggle('active', frogTutorialEnabled);
+  assistant.style.display = frogTutorialEnabled ? 'flex' : 'none';
+
+  if (dealerHand.length > 0) {
+    const reveal = gamePhase === 'dealer' || gamePhase === 'done';
+    renderDealerHand(reveal);
+    renderPlayerHands();
+  }
+
+  if (frogTutorialEnabled) {
+    recomputeRunningCountFromSeenCards();
+    showFrogSpeech("Ribbit! Running count tracks the net of all seen cards: add +1 for each 2-6, add 0 for 7-9, and add -1 for 10-A.\n\nI'll quiz you on this hand's card values, then ask for the running count before I reveal it.", 'info', 10000);
+    const visibleCards = getCurrentHandCardsForQuiz();
+    if (visibleCards.length) {
+      const visibleDelta = visibleCards.reduce((sum, c) => sum + getCountValue(c.rank), 0);
+      buildRunningCountQuiz(runningCount - visibleDelta, visibleCards);
+    } else {
+      pendingRunningCountQuiz = null;
+      runningCountRevealed = true;
+      renderFrogTrainer();
+    }
+  } else {
+    hideFrogSpeech();
+    pendingRunningCountQuiz = null;
+    runningCountRevealed = true;
+    renderFrogTrainer();
+    resetFrogLesson();
+    seedFrogLessonFromVisibleCards();
+    showFrogSpeech("Ribbit! I'm Freddy the Counting Frog! Let's practice real counting.\n\nHi-Lo rules:\n2-6 = +1\n7-9 = 0\n10-A = -1\n\nI'll quiz you on each visible card, then on every new card that appears.", 'info', 10000);
+    showFrogSpeech("Ribbit! I'm Freddy the Counting Frog! Let's practice real counting.\n\nHi-Lo rules:\n2-6 = +1\n7-9 = 0\n10-A = -1\n\nI'll quiz you on every visible card in the trainer panel.", 'info', 10000);
+  } else {
+    hideFrogSpeech();
+    resetFrogLesson();
+  }
+
+  updateFrogCount();
+}
+
+function updateFrogCount() {
+  const badge = document.getElementById('frog-count-badge');
+  if (!badge) return;
+  if (!frogTutorialEnabled) {
+    badge.style.display = 'none';
+    return;
+  }
+  badge.style.display = '';
+  if (!runningCountRevealed) {
+    badge.textContent = 'RC: ? | Solve quiz';
+    return;
+  }
+  const tc = getTrueCount();
+  badge.textContent = 'RC: ' + formatSigned(runningCount) + ' | TC: ' + formatSigned(tc);
+}
+
+function showFrogSpeech(text, type, duration) {
+  const el = document.getElementById('frog-speech');
+  el.textContent = text;
+  el.className = 'show' + (type === 'mistake' ? ' mistake' : type === 'info' ? ' info' : '');
+
+  if (frogSpeechTimeout) clearTimeout(frogSpeechTimeout);
+  frogSpeechTimeout = setTimeout(function() {
+    el.className = '';
+  }, duration || 7000);
+}
+
+function hideFrogSpeech() {
+  const el = document.getElementById('frog-speech');
+  el.className = '';
+  if (frogSpeechTimeout) clearTimeout(frogSpeechTimeout);
+}
+
+function frogGreet() {
+  if (!frogTutorialEnabled) return;
+  if (!runningCountRevealed) {
+    showFrogSpeech('Before I reveal RC, answer the quiz: card values first, then the new running count.', 'info', 5000);
+    return;
+  }
+  const rc = runningCount;
+  showFrogSpeech('Running count is ' + formatSigned(rc) + '. ' + getRunningCountMeaning(rc), 'info', 6500);
+}
+
+// ============ BASIC STRATEGY ENGINE ============
+
+function getDealerUpValue() {
+  if (!dealerHand.length) return 0;
+  const r = dealerHand[0].rank;
+  if (r === 'A') return 11;
+  if (['K','Q','J'].includes(r)) return 10;
+  return parseInt(r);
+}
+
+function getOptimalPlay(hand, dealerUp, canSplit, canDouble) {
+  const total = handValue(hand);
+  const soft = isSoft(hand);
+
+  // Pairs
+  if (canSplit && hand.length === 2 && hand[0].rank === hand[1].rank) {
+    var pr = hand[0].rank;
+    var prVal = (pr === 'A') ? 11 : (['K','Q','J'].includes(pr) ? 10 : parseInt(pr));
+
+    if (pr === 'A') return { action: 'split', reason: "Always split Aces! Each Ace gives you a great starting point to build a strong hand." };
+    if (pr === '8') return { action: 'split', reason: "Always split 8s. A total of 16 is the worst hand in blackjack \u2014 splitting gives you two fresh chances." };
+    if (prVal === 10) return { action: 'stand', reason: "Never split 10-value cards! A total of 20 is one of the best hands you can have." };
+    if (pr === '5') {
+      if (canDouble && dealerUp >= 2 && dealerUp <= 9) return { action: 'double', reason: "Treat 5+5 as a 10 \u2014 double down against the dealer's weak card for maximum profit!" };
+      return { action: 'hit', reason: "Treat 5+5 as a 10. Don't split \u2014 just hit to improve." };
+    }
+    if (pr === '4') {
+      if (dealerUp >= 5 && dealerUp <= 6) return { action: 'split', reason: "Split 4s against dealer 5-6. The dealer is very likely to bust with these up cards." };
+      return { action: 'hit', reason: "Don't split 4s here. A total of 8 is fine to hit." };
+    }
+    if (pr === '2' || pr === '3') {
+      if (dealerUp >= 2 && dealerUp <= 7) return { action: 'split', reason: "Split " + pr + "s against a weak dealer card. Low pairs do well when split against dealer 2-7." };
+      return { action: 'hit', reason: "Don't split " + pr + "s against a strong dealer. Just hit." };
+    }
+    if (pr === '6') {
+      if (dealerUp >= 2 && dealerUp <= 6) return { action: 'split', reason: "Split 6s against a weak dealer. The dealer is likely to bust!" };
+      return { action: 'hit', reason: "Don't split 6s against a strong dealer. Hit instead." };
+    }
+    if (pr === '7') {
+      if (dealerUp >= 2 && dealerUp <= 7) return { action: 'split', reason: "Split 7s against dealer 2-7. You can build two decent hands." };
+      return { action: 'hit', reason: "Don't split 7s against a strong dealer. Hit instead." };
+    }
+    if (pr === '9') {
+      if (dealerUp === 7 || dealerUp >= 10) return { action: 'stand', reason: "Stand with 18. Against this dealer card, 18 is good enough \u2014 don't risk splitting." };
+      return { action: 'split', reason: "Split 9s here \u2014 you can build two strong hands against this dealer card." };
+    }
+  }
+
+  // Soft hands
+  if (soft) {
+    if (total >= 20) return { action: 'stand', reason: "Stand on soft 20+. This is an excellent hand!" };
+    if (total === 19) return { action: 'stand', reason: "Stand on soft 19 \u2014 this hand wins most of the time." };
+    if (total === 18) {
+      if (dealerUp >= 9) return { action: 'hit', reason: "Hit soft 18 against dealer " + dealerUp + ". Your 18 isn't strong enough here, and you can't bust a soft hand!" };
+      if (canDouble && dealerUp >= 3 && dealerUp <= 6) return { action: 'double', reason: "Double soft 18 vs dealer's weak card. You have a flexible hand and the dealer is likely to bust." };
+      return { action: 'stand', reason: "Stand on soft 18. A solid hand against this dealer card." };
+    }
+    if (total === 17) {
+      if (canDouble && dealerUp >= 3 && dealerUp <= 6) return { action: 'double', reason: "Double soft 17 vs a weak dealer. Your Ace gives you flexibility to improve!" };
+      return { action: 'hit', reason: "Hit soft 17. You can't bust and 17 isn't strong enough." };
+    }
+    if (total === 16 || total === 15) {
+      if (canDouble && dealerUp >= 4 && dealerUp <= 6) return { action: 'double', reason: "Double your soft " + total + " against the dealer's weak card." };
+      return { action: 'hit', reason: "Hit soft " + total + ". You need to improve and can't bust." };
+    }
+    if (total === 14 || total === 13) {
+      if (canDouble && dealerUp >= 5 && dealerUp <= 6) return { action: 'double', reason: "Double your soft " + total + " against the dealer's very weak card." };
+      return { action: 'hit', reason: "Hit soft " + total + ". Keep building your hand \u2014 no risk of busting." };
+    }
+    return { action: 'hit', reason: "Hit to improve your soft hand. You can't bust!" };
+  }
+
+  // Hard hands
+  if (total >= 17) return { action: 'stand', reason: "Stand on hard " + total + ". The risk of busting is too high to hit." };
+  if (total >= 13 && total <= 16) {
+    if (dealerUp >= 2 && dealerUp <= 6) return { action: 'stand', reason: "Stand on " + total + " vs dealer's weak " + dealerUp + ". Let the dealer take the risk of busting." };
+    return { action: 'hit', reason: "Hit " + total + " vs dealer's strong " + dealerUp + ". The dealer likely has a good hand, so you must try to improve despite the risk." };
+  }
+  if (total === 12) {
+    if (dealerUp >= 4 && dealerUp <= 6) return { action: 'stand', reason: "Stand on 12 vs dealer's " + dealerUp + ". The dealer is very likely to bust with this weak card." };
+    return { action: 'hit', reason: "Hit 12 vs dealer's " + dealerUp + ". Only a 10-value busts you, and the dealer isn't weak enough to stand." };
+  }
+  if (total === 11) {
+    if (canDouble) return { action: 'double', reason: "Double on 11! This is the best doubling hand \u2014 any 10-value card gives you 21." };
+    return { action: 'hit', reason: "Hit on 11. Great chance to reach 21!" };
+  }
+  if (total === 10) {
+    if (canDouble && dealerUp >= 2 && dealerUp <= 9) return { action: 'double', reason: "Double on 10 vs dealer's weaker card. You're in a strong position!" };
+    return { action: 'hit', reason: "Hit on 10. Good chance to build a strong total." };
+  }
+  if (total === 9) {
+    if (canDouble && dealerUp >= 3 && dealerUp <= 6) return { action: 'double', reason: "Double on 9 vs dealer's weak card. Maximize your advantage!" };
+    return { action: 'hit', reason: "Hit on 9 to improve your hand." };
+  }
+  return { action: 'hit', reason: "Hit to improve your low hand. You can't bust with this total." };
+}
+
+function checkPlayerAction(playerAction) {
+  if (!frogTutorialEnabled || gamePhase !== 'playing') return;
+
+  var hand = playerHands[activeHandIndex];
+  if (!hand || hand.length === 0) return;
+
+  var dealerUp = getDealerUpValue();
+  var canSplit = hand.length === 2 && hand[0].rank === hand[1].rank && !splitMode && balance >= currentBet;
+  var canDouble = hand.length === 2 && balance >= currentBetForHand();
+
+  var optimal = getOptimalPlay(hand, dealerUp, canSplit, canDouble);
+
+  if (optimal.action !== playerAction) {
+    showFrogSpeech("The best play was " + optimal.action.toUpperCase() + ". " + optimal.reason, 'mistake', 10000);
+  }
+}
+
+function frogDealHint() {
+  if (!frogTutorialEnabled) return;
+  updateFrogCount();
+  var hand = playerHands[0];
+  var total = handValue(hand);
+  var dealerUp = getDealerUpValue();
+  var dealerRank = dealerHand[0].rank;
+
+  var hint = "Your " + total + " vs dealer's " + dealerRank + ". ";
+  if (total === 21) {
+    hint = "Blackjack check time!";
+  } else if (total === 11) {
+    hint += "Great hand for doubling!";
+  } else if (total >= 17) {
+    hint += "Strong hand \u2014 you'll want to stand.";
+  } else if (dealerUp >= 2 && dealerUp <= 6) {
+    hint += "Dealer is weak \u2014 they're likely to bust.";
+  } else {
+    hint += "Dealer is strong \u2014 you may need to take risks.";
+  }
+  const odds = estimateStandWinOdds(playerHands[activeHandIndex], 300);
+  if (odds) hint += ' If you stand now, win chance is about ' + odds.winPct + '% (win/push ' + odds.avoidLosePct + '%).';
+  if (runningCountRevealed) hint += ' RC ' + formatSigned(runningCount) + ': ' + getRunningCountMeaning(runningCount);
+  showFrogSpeech(hint, 'info', 7000);
+  if (odds) hint += ' If you stand now, win chance is about ' + odds.winPct + '%.';
+  showFrogSpeech(hint, 'info', 6000);
 }
 
 // ============ INIT ============
@@ -816,6 +1632,8 @@ function resetRound() {
 createShoe();
 updateBalance();
 setButtons();
+updateWinOdds();
+renderFrogTrainer();
 setMessage('Place your bet to begin!');
 </script>
 
