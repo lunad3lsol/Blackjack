@@ -312,10 +312,12 @@ const RESHUFFLE_THRESHOLD = 40; // reshuffle when fewer than ~40 cards remain
 
 let shoe = [];
 let discardPile = [];
+let needsReshuffle = false;
 
 function createShoe() {
   shoe = [];
   discardPile = [];
+  needsReshuffle = false;
   for (let d = 0; d < NUM_DECKS; d++) {
     for (const suit of SUITS) {
       for (const rank of RANKS) {
@@ -334,15 +336,25 @@ function shuffleArray(arr) {
   }
 }
 
-function drawCard() {
-  if (shoe.length <= RESHUFFLE_THRESHOLD) {
-    // Reshuffle discard pile back into shoe
+function checkReshuffle() {
+  // Only reshuffle between rounds, never mid-hand (like a real casino cut card)
+  if (needsReshuffle || shoe.length <= RESHUFFLE_THRESHOLD) {
     shoe = shoe.concat(discardPile);
     discardPile = [];
     shuffleArray(shoe);
+    needsReshuffle = false;
     updateShoeInfo();
+    return true; // signals that a reshuffle happened
   }
+  return false;
+}
+
+function drawCard() {
+  // Flag for reshuffle if we cross the threshold, but finish the hand first
   const card = shoe.pop();
+  if (shoe.length <= RESHUFFLE_THRESHOLD) {
+    needsReshuffle = true;
+  }
   updateShoeInfo();
   return card;
 }
@@ -352,9 +364,13 @@ function discardCards(cards) {
 }
 
 function updateShoeInfo() {
+  const totalCards = NUM_DECKS * 52;
+  const dealt = totalCards - shoe.length;
+  const penetration = Math.round((dealt / totalCards) * 100);
   document.getElementById('cards-left').textContent = shoe.length;
+  const reshuffleNote = needsReshuffle ? ' | Shuffle pending' : '';
   document.getElementById('shoe-info').textContent =
-    `Shoe: ${shoe.length} cards remaining | ${NUM_DECKS}-deck shoe | Reshuffle at ${RESHUFFLE_THRESHOLD} cards`;
+    `Shoe: ${shoe.length}/${totalCards} cards | ${penetration}% dealt | ${NUM_DECKS}-deck shoe${reshuffleNote}`;
 }
 
 // ============ HAND VALUE CALCULATION ============
@@ -528,11 +544,18 @@ function rebet() {
 
 function deal() {
   if (currentBet <= 0) return;
+
+  // Reshuffle between rounds if cut card was passed (never mid-hand)
+  const didReshuffle = checkReshuffle();
+  if (didReshuffle) {
+    setMessage('Shoe reshuffled.', '');
+  }
+
   gamePhase = 'playing';
   lastBet = currentBet;
   splitMode = false;
   activeHandIndex = 0;
-  setMessage('');
+  setMessage(didReshuffle ? 'New shoe - cards reshuffled.' : '');
 
   dealerHand = [drawCard(), drawCard()];
   playerHands = [[drawCard(), drawCard()]];
@@ -654,13 +677,14 @@ function actionSplit() {
   playerHands.doubled = {};
   activeHandIndex = 0;
 
-  // If split aces, only one card each and done
+  renderPlayerHands();
+
+  // If split aces, only one card each and done (standard casino rule)
   if (hand[0].rank === 'A') {
     dealerTurn();
     return;
   }
 
-  renderPlayerHands();
   setButtons();
 }
 
