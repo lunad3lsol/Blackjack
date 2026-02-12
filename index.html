@@ -548,6 +548,10 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
 </div>
 
 <script>
+window.onerror = function(msg, url, line, col, err) {
+  document.getElementById('message').textContent = 'JS ERROR: ' + msg + ' (line ' + line + ')';
+  document.getElementById('message').style.color = 'red';
+};
 // ============ SHOE & DECK LOGIC (3-deck shoe, realistic) ============
 
 const SUITS = ['\u2660', '\u2665', '\u2666', '\u2663']; // spade, heart, diamond, club
