@@ -765,14 +765,15 @@ function setMessage(text, cls) {
 
 function setButtons() {
   const inPlay = gamePhase === 'playing';
+  const trainerLocked = frogTutorialEnabled && !!frogQuestion;
   const hand = playerHands[activeHandIndex] || [];
   const val = handValue(hand);
-  document.getElementById('btn-hit').disabled = !inPlay || val >= 21;
-  document.getElementById('btn-stand').disabled = !inPlay;
-  document.getElementById('btn-double').disabled = !(inPlay && hand.length === 2 && balance >= currentBet);
-  document.getElementById('btn-split').disabled = !(inPlay && hand.length === 2 && hand[0].rank === hand[1].rank && !splitMode && balance >= currentBet);
+  document.getElementById('btn-hit').disabled = trainerLocked || !inPlay || val >= 21;
+  document.getElementById('btn-stand').disabled = trainerLocked || !inPlay;
+  document.getElementById('btn-double').disabled = trainerLocked || !(inPlay && hand.length === 2 && balance >= currentBet);
+  document.getElementById('btn-split').disabled = trainerLocked || !(inPlay && hand.length === 2 && hand[0].rank === hand[1].rank && !splitMode && balance >= currentBet);
   const betting = gamePhase === 'betting' || gamePhase === 'done';
-  document.getElementById('btn-deal').disabled = !(betting && currentBet > 0);
+  document.getElementById('btn-deal').disabled = trainerLocked || !(betting && currentBet > 0);
   document.getElementById('btn-clear').style.display = betting ? '' : 'none';
   document.getElementById('btn-rebet').style.display = (betting && lastBet > 0 && currentBet === 0) ? '' : 'none';
 }
@@ -796,6 +797,10 @@ function rebet() {
 }
 
 function deal() {
+  if (frogTutorialEnabled && frogQuestion) {
+    showFrogSpeech('Answer the count prompt before the next hand.', 'mistake', 3000);
+    return;
+  }
   if (currentBet <= 0) return;
   const didReshuffle = checkReshuffle();
   gamePhase = 'playing'; lastBet = currentBet; splitMode = false; activeHandIndex = 0;
@@ -806,7 +811,7 @@ function deal() {
   renderDealerHand(false); renderPlayerHands();
   if (isBlackjack(playerHands[0]) || isBlackjack(dealerHand)) {
     renderDealerHand(true);
-    if (frogTutorialEnabled) countCard(dealerHand[1]);
+    if (frogTutorialEnabled) { const rcBefore = runningCount; countCard(dealerHand[1]); announceCardDraw(dealerHand[1], 'Dealer hole card', rcBefore); }
     if (isBlackjack(playerHands[0]) && isBlackjack(dealerHand)) { setMessage('Push!', 'push'); balance += currentBet; }
     else if (isBlackjack(playerHands[0])) { setMessage('Blackjack!', 'win'); balance += currentBet + Math.floor(currentBet * 1.5); }
     else setMessage('Dealer Blackjack!', 'lose');
@@ -815,6 +820,10 @@ function deal() {
 }
 
 function actionHit() {
+  if (frogTutorialEnabled && frogQuestion) {
+    showFrogSpeech('Count first, then play the hand.', 'mistake', 2500);
+    return;
+  }
   if (gamePhase !== 'playing') return;
   checkPlayerAction('hit');
   const hand = playerHands[activeHandIndex];
@@ -825,12 +834,20 @@ function actionHit() {
 }
 
 function actionStand() {
+  if (frogTutorialEnabled && frogQuestion) {
+    showFrogSpeech('Count first, then continue.', 'mistake', 2500);
+    return;
+  }
   if (gamePhase !== 'playing') return;
   if (!splitMode || activeHandIndex === playerHands.length - 1) dealerTurn();
   else { activeHandIndex++; renderPlayerHands(); setButtons(); }
 }
 
 function actionDouble() {
+  if (frogTutorialEnabled && frogQuestion) {
+    showFrogSpeech('Count first, then continue.', 'mistake', 2500);
+    return;
+  }
   if (gamePhase !== 'playing' || balance < currentBet) return;
   checkPlayerAction('double');
   balance -= currentBet; currentBet *= 2; updateBalance();
@@ -841,25 +858,37 @@ function actionDouble() {
 }
 
 function actionSplit() {
+  if (frogTutorialEnabled && frogQuestion) {
+    showFrogSpeech('Count first, then continue.', 'mistake', 2500);
+    return;
+  }
   if (gamePhase !== 'playing' || balance < currentBet) return;
   checkPlayerAction('split');
   balance -= currentBet; updateBalance();
   const hand = playerHands[0];
   splitMode = true;
   playerHands = [[hand[0], drawCard()], [hand[1], drawCard()]];
-  if (frogTutorialEnabled) { countCard(playerHands[0][1]); countCard(playerHands[1][1]); updateFrogCount(); }
+  if (frogTutorialEnabled) {
+    let rcBefore = runningCount;
+    countCard(playerHands[0][1]);
+    announceCardDraw(playerHands[0][1], 'Split draw hand 1', rcBefore);
+    rcBefore = runningCount;
+    countCard(playerHands[1][1]);
+    announceCardDraw(playerHands[1][1], 'Split draw hand 2', rcBefore);
+    updateFrogCount();
+  }
   renderPlayerHands(); setButtons();
 }
 
 function dealerTurn() {
   gamePhase = 'dealer'; renderDealerHand(true);
-  if (frogTutorialEnabled) countCard(dealerHand[1]);
+  if (frogTutorialEnabled) { const rcBefore = runningCount; countCard(dealerHand[1]); announceCardDraw(dealerHand[1], 'Dealer reveal', rcBefore); }
   if (playerHands.every(h => handValue(h) > 21)) { resolveRound(); return; }
   function draw() {
     const val = handValue(dealerHand), soft = isSoft(dealerHand);
     if (val < 17 || (val === 17 && soft)) {
       const c = drawCard(); dealerHand.push(c);
-      if (frogTutorialEnabled) countCard(c); renderDealerHand(true); setTimeout(draw, 500);
+      if (frogTutorialEnabled) { const rcBefore = runningCount; countCard(c); announceCardDraw(c, 'Dealer hit', rcBefore); } renderDealerHand(true); setTimeout(draw, 500);
     } else resolveRound();
   }
   setTimeout(draw, 500);
@@ -881,13 +910,20 @@ function endRound() { gamePhase = 'done'; currentBet = 0; updateBalance(); setBu
 
 function resetRound() {
   gamePhase = 'betting'; dealerHand = []; playerHands = [[]]; splitMode = false; activeHandIndex = 0;
+  frogQuestion = null;
+  frogQuestionQueue = [];
   setMessage(''); renderDealerHand(false); renderPlayerHands(); updateBalance(); setButtons(); renderFrogTrainer();
 }
 
 // ============ FROG TUTORIAL LOGIC ============
 let frogTutorialEnabled = false, showCardOverlays = true, frogIntroActive = false, frogIntroStep = 0, frogQuestion = null;
+let frogQuestionQueue = [];
 let frogLessonScore = { correct: 0, total: 0 };
-const frogIntroSteps = ["Welcome!", "Hi-Lo count: 2-6 is +1, 10-A is -1.", "True Count = RC / Decks Remaining."];
+const frogIntroSteps = [
+  "Welcome!",
+  "We'll train speed counting in a casino rhythm.",
+  "You'll enter the running count after every exposed card."
+];
 
 function getCountValue(rank) { if(['2','3','4','5','6'].includes(rank)) return 1; if(['7','8','9'].includes(rank)) return 0; return -1; }
 function countCard(card) { runningCount += getCountValue(card.rank); }
@@ -898,8 +934,14 @@ function toggleFrogTutorial() {
   frogTutorialEnabled = !frogTutorialEnabled;
   document.getElementById('frog-assistant').style.display = frogTutorialEnabled ? 'flex' : 'none';
   document.getElementById('overlay-toggle-wrap').style.display = frogTutorialEnabled ? 'flex' : 'none';
-  if (frogTutorialEnabled) startFrogIntro(); else hideFrogSpeech();
+  if (frogTutorialEnabled) startFrogIntro();
+  else {
+    frogQuestion = null;
+    frogQuestionQueue = [];
+    hideFrogSpeech();
+  }
   updateFrogCount(); renderFrogTrainer();
+  setButtons();
 }
 
 function startFrogIntro() { frogIntroActive = true; frogIntroStep = 0; showFrogSpeech(frogIntroSteps[0], 'info', 0, true); }
@@ -909,23 +951,42 @@ function nextFrogIntro() {
   else showFrogSpeech(frogIntroSteps[frogIntroStep], 'info', 0, true);
 }
 
-function askRunningCountQuestion(ctx, cards, before, after) {
-  if (!frogTutorialEnabled || frogIntroActive) return;
-  frogQuestion = { type: 'running', context: ctx, cards: Array.isArray(cards)?cards:[cards], rcBefore: before, expected: after };
-  renderFrogTrainer();
+function getRunningCountTip(card) {
+  if (['2','3','4','5','6'].includes(card.rank)) return 'Tip: low cards are +1. Group 2-6 together mentally.';
+  if (['7','8','9'].includes(card.rank)) return 'Tip: 7-9 are neutral. Don\'t change your count.';
+  return 'Tip: 10/J/Q/K/A are -1. See a picture card or ace, subtract fast.';
 }
 
-function askTrueCountQuestion() {
+function askRunningCountQuestion(ctx, cards, before, after) {
   if (!frogTutorialEnabled || frogIntroActive) return;
-  frogQuestion = { type: 'true', expected: getTrueCount(), rcNow: runningCount, dr: Math.round((shoe.length/52)*10)/10 };
+  const questionCards = Array.isArray(cards) ? cards : [cards];
+  frogQuestionQueue.push({
+    type: 'running',
+    context: ctx,
+    cards: questionCards,
+    rcBefore: before,
+    expected: after,
+    tip: getRunningCountTip(questionCards[questionCards.length - 1])
+  });
+  if (!frogQuestion) loadNextFrogQuestion();
+}
+
+function loadNextFrogQuestion() {
+  frogQuestion = frogQuestionQueue.shift() || null;
   renderFrogTrainer();
+  updateFrogCount();
+  setButtons();
 }
 
 function announceCardDraw(c, ctx, before) { askRunningCountQuestion(ctx, c, before, runningCount); }
 function frogDealHint() {
-  const cards = [playerHands[0][0], playerHands[0][1], dealerHand[0]];
-  const delta = cards.reduce((s, c) => s + getCountValue(c.rank), 0);
-  askRunningCountQuestion('Deal', cards, runningCount - delta, runningCount);
+  const cards = [dealerHand[0], playerHands[0][0], playerHands[0][1]];
+  let rcCursor = runningCount - cards.reduce((s, c) => s + getCountValue(c.rank), 0);
+  cards.forEach((card, idx) => {
+    const nextRc = rcCursor + getCountValue(card.rank);
+    askRunningCountQuestion(`Deal card ${idx + 1}`, card, rcCursor, nextRc);
+    rcCursor = nextRc;
+  });
 }
 
 function submitTrainerAnswer() {
@@ -935,10 +996,13 @@ function submitTrainerAnswer() {
   if (val === frogQuestion.expected) {
     frogLessonScore.correct++;
     showFrogSpeech('Correct!', 'info', 3000);
-    if (frogQuestion.type === 'running') { frogQuestion = null; askTrueCountQuestion(); }
-    else frogQuestion = null;
-  } else showFrogSpeech('Try again!', 'mistake', 3000);
-  document.getElementById('frog-trainer-input').value = ''; renderFrogTrainer();
+  } else {
+    showFrogSpeech(`Good effort. Correct count was ${formatSigned(frogQuestion.expected)}.`, 'mistake', 3500);
+  }
+  frogQuestion = null;
+  document.getElementById('frog-trainer-input').value = '';
+  loadNextFrogQuestion();
+  setButtons();
 }
 
 function renderFrogTrainer() {
@@ -946,15 +1010,27 @@ function renderFrogTrainer() {
   if (!frogTutorialEnabled) { panel.className = ''; return; }
   panel.className = 'show';
   const prompt = document.getElementById('frog-trainer-prompt');
+  const help = document.getElementById('frog-trainer-help');
   if (frogIntroActive) prompt.textContent = "Intro active...";
-  else if (frogQuestion) prompt.textContent = frogQuestion.type === 'running' ? "Running Count?" : "True Count?";
-  else prompt.textContent = "Waiting for next move...";
+  else if (frogQuestion) {
+    const card = frogQuestion.cards[frogQuestion.cards.length - 1];
+    prompt.textContent = `${frogQuestion.context}: ${card.rank}${card.suit} shown. RC was ${formatSigned(frogQuestion.rcBefore)}. New RC?`;
+    help.textContent = frogQuestion.tip;
+  } else {
+    prompt.textContent = "Waiting for next move...";
+    help.textContent = 'Speed tip: keep a small range in mind (e.g., -3 to +3) so adjustments stay quick.';
+  }
   document.getElementById('frog-trainer-score').textContent = `Score: ${frogLessonScore.correct}/${frogLessonScore.total}`;
 }
 
 function updateFrogCount() {
   const b = document.getElementById('frog-count-badge');
-  if (frogTutorialEnabled) { b.style.display = 'block'; b.textContent = `RC: ${formatSigned(runningCount)} | TC: ${getTrueCount()}`; }
+  if (!frogTutorialEnabled) {
+    b.style.display = 'none';
+    return;
+  }
+  b.style.display = 'block';
+  b.textContent = frogQuestion ? 'RC: ? | TC: ?' : `RC: ${formatSigned(runningCount)} | TC: ${getTrueCount()}`;
 }
 
 function showFrogSpeech(txt, type, dur, sticky) {
