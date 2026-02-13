@@ -283,6 +283,20 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
   white-space: nowrap;
 }
 
+#overlay-toggle-wrap {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 0;
+}
+
+#overlay-toggle-label {
+  font-size: 13px;
+  color: #aed4a0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 #frog-assistant {
   position: fixed;
   bottom: 20px;
@@ -463,6 +477,13 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
     <div class="toggle-knob"></div>
   </div>
   <span id="frog-toggle-label" onclick="toggleFrogTutorial()">&#x1F438; Counting Tutor</span>
+</div>
+
+<div id="overlay-toggle-wrap">
+  <div class="toggle-switch active" id="overlay-toggle" onclick="toggleCardOverlays()">
+    <div class="toggle-knob"></div>
+  </div>
+  <span id="overlay-toggle-label" onclick="toggleCardOverlays()">Card Count Overlays</span>
 </div>
 
 <div id="info-bar">
@@ -726,7 +747,7 @@ function cardHTML(card, faceDown) {
   }
   const color = SUIT_COLOR[card.suit];
   let overlay = '';
-  if (frogTutorialEnabled) {
+  if (frogTutorialEnabled && showCardOverlays) {
     const cv = getCountValue(card.rank);
     const cvClass = cv > 0 ? 'count-plus' : cv < 0 ? 'count-minus' : 'count-zero';
     const cvText = cv > 0 ? '+1' : cv < 0 ? '\u22121' : '0';
@@ -907,6 +928,7 @@ function deal() {
     if (frogTutorialEnabled) {
       countCard(dealerHand[1]);
       updateFrogCount();
+      announceCardDraw(dealerHand[1], 'Dealer reveals');
     }
     if (playerBJ && dealerBJ) {
       setMessage('Both Blackjack - Push!', 'push');
@@ -936,6 +958,7 @@ function actionHit() {
   if (frogTutorialEnabled) {
     countCard(hand[hand.length - 1]);
     updateFrogCount();
+    announceCardDraw(hand[hand.length - 1], 'You hit');
   }
   renderPlayerHands();
 
@@ -949,6 +972,7 @@ function actionHit() {
         if (frogTutorialEnabled) {
           countCard(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1]);
           updateFrogCount();
+          announceCardDraw(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1], 'Next hand');
         }
       }
       renderPlayerHands();
@@ -973,6 +997,7 @@ function actionStand() {
       if (frogTutorialEnabled) {
         countCard(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1]);
         updateFrogCount();
+        announceCardDraw(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1], 'Next hand');
       }
     }
     renderPlayerHands();
@@ -1004,6 +1029,7 @@ function actionDouble() {
   if (frogTutorialEnabled) {
     countCard(hand[hand.length - 1]);
     updateFrogCount();
+    announceCardDraw(hand[hand.length - 1], 'Double down');
   }
   renderPlayerHands();
 
@@ -1015,6 +1041,7 @@ function actionDouble() {
       if (frogTutorialEnabled) {
         countCard(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1]);
         updateFrogCount();
+        announceCardDraw(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1], 'Next hand');
       }
     }
     renderPlayerHands();
@@ -1047,6 +1074,7 @@ function actionSplit() {
     countCard(playerHands[0][1]);
     countCard(playerHands[1][1]);
     updateFrogCount();
+    announceCardDraw(playerHands[1][1], 'Split hand 2');
   }
 
   renderPlayerHands();
@@ -1071,6 +1099,7 @@ function dealerTurn() {
   if (frogTutorialEnabled) {
     countCard(dealerHand[1]);
     updateFrogCount();
+    announceCardDraw(dealerHand[1], 'Dealer reveals');
   }
 
   // Check if all player hands busted
@@ -1089,6 +1118,7 @@ function dealerTurn() {
       if (frogTutorialEnabled) {
         countCard(dealerHand[dealerHand.length - 1]);
         updateFrogCount();
+        announceCardDraw(dealerHand[dealerHand.length - 1], 'Dealer draws');
       }
       renderDealerHand(true);
       setTimeout(dealerDraw, 400);
@@ -1200,6 +1230,7 @@ function resetRound() {
 // ============ FROG COUNTING TUTORIAL ============
 
 let frogTutorialEnabled = false;
+let showCardOverlays = true;
 let runningCount = 0;
 let frogSpeechTimeout = null;
 let frogLessonScore = { correct: 0, total: 0 };
@@ -1275,6 +1306,32 @@ function countCard(card) {
   queueFrogLesson(card, rcBefore);
 }
 
+function announceCardDraw(card, context) {
+  if (!frogTutorialEnabled) return;
+  const cv = getCountValue(card.rank);
+  const cvText = formatSigned(cv);
+  const rcAfter = runningCount;
+  const rcBefore = rcAfter - cv;
+  const tc = getTrueCount();
+  let msg = (context || 'Card drawn') + ': ' + card.rank + card.suit + ' (' + cvText + '). ';
+  msg += 'RC: ' + formatSigned(rcBefore) + ' \u2192 ' + formatSigned(rcAfter);
+  msg += ' | TC: ' + formatSigned(tc);
+  msg += '\nWhat\u2019s the running count?';
+  showFrogSpeech(msg, 'info', 5000);
+}
+
+function toggleCardOverlays() {
+  showCardOverlays = !showCardOverlays;
+  const toggle = document.getElementById('overlay-toggle');
+  toggle.classList.toggle('active', showCardOverlays);
+  // Re-render cards to show/hide overlays
+  if (dealerHand.length > 0) {
+    const reveal = gamePhase === 'dealer' || gamePhase === 'done';
+    renderDealerHand(reveal);
+    renderPlayerHands();
+  }
+}
+
 function getTrueCount() {
   const decksRemaining = shoe.length / 52;
   if (decksRemaining < 0.5) return runningCount;
@@ -1347,6 +1404,7 @@ function toggleFrogTutorial() {
 
   toggle.classList.toggle('active', frogTutorialEnabled);
   assistant.style.display = frogTutorialEnabled ? 'flex' : 'none';
+  document.getElementById('overlay-toggle-wrap').style.display = frogTutorialEnabled ? 'flex' : 'none';
 
   if (dealerHand.length > 0) {
     const reveal = gamePhase === 'dealer' || gamePhase === 'done';
@@ -1526,9 +1584,16 @@ function frogDealHint() {
   var dealerUp = getDealerUpValue();
   var dealerRank = dealerHand[0].rank;
 
-  var hint = "Your " + total + " vs dealer's " + dealerRank + ". ";
+  // Card-by-card count breakdown for the deal
+  var p1 = hand[0], p2 = hand[1], dUp = dealerHand[0];
+  var countBreakdown = 'Cards: ' + p1.rank + p1.suit + ' (' + formatSigned(getCountValue(p1.rank)) + '), '
+    + p2.rank + p2.suit + ' (' + formatSigned(getCountValue(p2.rank)) + '), '
+    + 'Dealer: ' + dUp.rank + dUp.suit + ' (' + formatSigned(getCountValue(dUp.rank)) + ')';
+
+  var hint = countBreakdown + '\n';
+  hint += 'Your ' + total + ' vs dealer\'s ' + dealerRank + '. ';
   if (total === 21) {
-    hint = "Blackjack check time!";
+    hint += "Blackjack check time!";
   } else if (total === 11) {
     hint += "Great hand for doubling!";
   } else if (total >= 17) {
@@ -1538,10 +1603,10 @@ function frogDealHint() {
   } else {
     hint += "Dealer is strong \u2014 you may need to take risks.";
   }
-  const odds = estimateStandWinOdds(playerHands[activeHandIndex], 300);
-  if (odds) hint += ' If you stand now, win chance is about ' + odds.winPct + '% (win/push ' + odds.avoidLosePct + '%).';
-  hint += ' RC ' + formatSigned(runningCount) + ': ' + getRunningCountMeaning(runningCount);
-  showFrogSpeech(hint, 'info', 7000);
+  var rc = runningCount;
+  var tc = getTrueCount();
+  hint += '\nRC: ' + formatSigned(rc) + ' | TC: ' + formatSigned(tc) + '. What\u2019s the running count?';
+  showFrogSpeech(hint, 'info', 8000);
 }
 
 // ============ INIT ============
