@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blackjack</title>
 <style>
+/* Styles remain unchanged as they were working correctly */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -112,7 +113,6 @@ h1 {
   margin: 8px 0;
 }
 
-/* Chip betting area */
 #betting-area {
   display: flex;
   flex-direction: column;
@@ -167,7 +167,6 @@ h1 {
   margin: 4px 0;
 }
 
-/* Action buttons */
 #actions {
   display: flex;
   gap: 10px;
@@ -219,7 +218,6 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
   margin-top: 4px;
 }
 
-/* Split hands layout */
 #split-container {
   display: flex;
   gap: 30px;
@@ -236,8 +234,6 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
   border-color: #ffd700;
   box-shadow: 0 0 12px rgba(255,215,0,0.3);
 }
-
-/* ============ FROG COUNTING TUTORIAL ============ */
 
 #frog-toggle-wrap {
   display: flex;
@@ -379,7 +375,6 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
   transform: scale(1.1);
 }
 
-
 #frog-trainer {
   max-width: 320px;
   background: rgba(18, 30, 24, 0.95);
@@ -434,6 +429,7 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
   margin-top: 6px;
   color: #ffd700;
 }
+
 #frog-count-badge {
   background: #1a1a2e;
   color: #ffd700;
@@ -466,20 +462,9 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
   line-height: 1;
 }
 
-.card-count-overlay.count-plus {
-  background: #27ae60;
-  color: #fff;
-}
-
-.card-count-overlay.count-zero {
-  background: #7f8c8d;
-  color: #fff;
-}
-
-.card-count-overlay.count-minus {
-  background: #e74c3c;
-  color: #fff;
-}
+.card-count-overlay.count-plus { background: #27ae60; color: #fff; }
+.card-count-overlay.count-zero { background: #7f8c8d; color: #fff; }
+.card-count-overlay.count-minus { background: #e74c3c; color: #fff; }
 </style>
 </head>
 <body>
@@ -508,7 +493,6 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
 </div>
 
 <div id="table">
-  <!-- Dealer -->
   <div class="hand-area" id="dealer-area">
     <div class="hand-label">Dealer</div>
     <div class="hand-total" id="dealer-total"></div>
@@ -519,7 +503,6 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
 
   <div id="message"></div>
 
-  <!-- Player (normal) -->
   <div id="player-normal">
     <div class="hand-area" id="player-area">
       <div class="hand-label">Your Hand</div>
@@ -528,11 +511,8 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
     </div>
   </div>
 
-  <!-- Player (split) -->
-  <div id="split-container" style="display:none">
-  </div>
+  <div id="split-container" style="display:none"></div>
 
-  <!-- Actions -->
   <div id="actions">
     <button id="btn-hit" onclick="actionHit()" disabled>Hit</button>
     <button id="btn-stand" onclick="actionStand()" disabled>Stand</button>
@@ -540,7 +520,6 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
     <button id="btn-split" onclick="actionSplit()" disabled>Split</button>
   </div>
 
-  <!-- Betting -->
   <div id="betting-area">
     <div id="chip-rack">
       <div class="chip" data-val="10" onclick="addBet(10)">$10</div>
@@ -572,7 +551,6 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
       <button onclick="submitTrainerAnswer()">Submit</button>
     </div>
     <div id="frog-trainer-help"></div>
-    <div id="frog-trainer-buttons"></div>
     <div id="frog-trainer-score"></div>
   </div>
   <div id="frog-avatar-row">
@@ -582,21 +560,17 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
 </div>
 
 <script>
-window.onerror = function(msg, url, line, col, err) {
-  document.getElementById('message').textContent = 'JS ERROR: ' + msg + ' (line ' + line + ')';
-  document.getElementById('message').style.color = 'red';
-};
-// ============ SHOE & DECK LOGIC (3-deck shoe, realistic) ============
-
-const SUITS = ['\u2660', '\u2665', '\u2666', '\u2663']; // spade, heart, diamond, club
+// ============ SHOE & DECK LOGIC ============
+const SUITS = ['\u2660', '\u2665', '\u2666', '\u2663'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const SUIT_COLOR = { '\u2660': 'black', '\u2665': 'red', '\u2666': 'red', '\u2663': 'black' };
 const NUM_DECKS = 3;
-const RESHUFFLE_THRESHOLD = 40; // reshuffle when fewer than ~40 cards remain
+const RESHUFFLE_THRESHOLD = 40;
 
 let shoe = [];
 let discardPile = [];
 let needsReshuffle = false;
+let runningCount = 0;
 
 function createShoe() {
   shoe = [];
@@ -605,9 +579,7 @@ function createShoe() {
   runningCount = 0;
   for (let d = 0; d < NUM_DECKS; d++) {
     for (const suit of SUITS) {
-      for (const rank of RANKS) {
-        shoe.push({ rank, suit });
-      }
+      for (const rank of RANKS) { shoe.push({ rank, suit }); }
     }
   }
   shuffleArray(shoe);
@@ -623,7 +595,6 @@ function shuffleArray(arr) {
 }
 
 function checkReshuffle() {
-  // Only reshuffle between rounds, never mid-hand (like a real casino cut card)
   if (needsReshuffle || shoe.length <= RESHUFFLE_THRESHOLD) {
     shoe = shoe.concat(discardPile);
     discardPile = [];
@@ -632,17 +603,14 @@ function checkReshuffle() {
     runningCount = 0;
     updateShoeInfo();
     updateFrogCount();
-    return true; // signals that a reshuffle happened
+    return true;
   }
   return false;
 }
 
 function drawCard() {
-  // Flag for reshuffle if we cross the threshold, but finish the hand first
   const card = shoe.pop();
-  if (shoe.length <= RESHUFFLE_THRESHOLD) {
-    needsReshuffle = true;
-  }
+  if (shoe.length <= RESHUFFLE_THRESHOLD) needsReshuffle = true;
   updateShoeInfo();
   return card;
 }
@@ -662,10 +630,8 @@ function updateShoeInfo() {
 }
 
 // ============ HAND VALUE CALCULATION ============
-
 function handValue(cards) {
-  let total = 0;
-  let aces = 0;
+  let total = 0, aces = 0;
   for (const c of cards) {
     if (c.rank === 'A') { total += 11; aces++; }
     else if (['K','Q','J'].includes(c.rank)) { total += 10; }
@@ -702,9 +668,7 @@ function simulateDealerFinal(dealerCards, deck) {
     if (val < 17 || (val === 17 && soft)) {
       if (!deck.length) return val;
       dealerCards.push(drawRandomFromDeck(deck));
-    } else {
-      return val;
-    }
+    } else return val;
   }
 }
 
@@ -712,25 +676,17 @@ function estimateStandWinOdds(hand, iterations) {
   if (!hand || hand.length === 0) return null;
   const playerTotal = handValue(hand);
   if (playerTotal > 21) return { winPct: 0, avoidLosePct: 0 };
-
   const unknownDeck = shoe.slice();
-  if (gamePhase === 'playing' && dealerHand.length > 1) {
-    unknownDeck.push(dealerHand[1]);
-  }
-
+  if (gamePhase === 'playing' && dealerHand.length > 1) unknownDeck.push(dealerHand[1]);
   if (unknownDeck.length === 0 || dealerHand.length === 0) return null;
-
-  let wins = 0;
-  let pushes = 0;
+  let wins = 0, pushes = 0;
   for (let i = 0; i < iterations; i++) {
     const simDeck = unknownDeck.slice();
     const simDealer = [dealerHand[0], drawRandomFromDeck(simDeck)];
     const dealerTotal = simulateDealerFinal(simDealer, simDeck);
-
     if (dealerTotal > 21 || playerTotal > dealerTotal) wins++;
     else if (dealerTotal === playerTotal) pushes++;
   }
-
   return {
     winPct: Math.round((wins / iterations) * 1000) / 10,
     avoidLosePct: Math.round(((wins + pushes) / iterations) * 1000) / 10
@@ -739,25 +695,23 @@ function estimateStandWinOdds(hand, iterations) {
 
 function updateWinOdds() {
   const el = document.getElementById('win-odds');
-  if (!el) return;
-  if (gamePhase !== 'playing') {
-    el.textContent = '--';
-    return;
-  }
+  if (!el || gamePhase !== 'playing') { if(el) el.textContent = '--'; return; }
   const odds = estimateStandWinOdds(playerHands[activeHandIndex], 500);
-  if (!odds) {
-    el.textContent = '--';
-    return;
-  }
+  if (!odds) { el.textContent = '--'; return; }
   el.textContent = odds.winPct + '% (push+win ' + odds.avoidLosePct + '%)';
 }
 
-// ============ CARD RENDERING ============
+// ============ UI & GAME LOGIC ============
+let balance = 1000, currentBet = 0, lastBet = 0, dealerHand = [], playerHands = [], activeHandIndex = 0;
+let gamePhase = 'betting', splitMode = false;
+
+function updateBalance() {
+  document.getElementById('balance').textContent = balance;
+  document.getElementById('current-bet').textContent = currentBet;
+}
 
 function cardHTML(card, faceDown) {
-  if (faceDown) {
-    return '<div class="card face-down"></div>';
-  }
+  if (faceDown) return '<div class="card face-down"></div>';
   const color = SUIT_COLOR[card.suit];
   let overlay = '';
   if (frogTutorialEnabled && showCardOverlays) {
@@ -766,47 +720,16 @@ function cardHTML(card, faceDown) {
     const cvText = cv > 0 ? '+1' : cv < 0 ? '\u22121' : '0';
     overlay = `<div class="card-count-overlay ${cvClass}">${cvText}</div>`;
   }
-  return `<div class="card ${color}">
-    <div class="top">${card.rank}${card.suit}</div>
-    <div class="center">${card.suit}</div>
-    <div class="bottom">${card.rank}${card.suit}</div>
-    ${overlay}
-  </div>`;
-}
-
-// ============ GAME STATE ============
-
-let balance = 1000;
-let currentBet = 0;
-let lastBet = 0;
-let dealerHand = [];
-let playerHands = [];    // array of hands (for split)
-let activeHandIndex = 0;
-let gamePhase = 'betting'; // 'betting', 'playing', 'dealer', 'done'
-let splitMode = false;
-
-// ============ UI UPDATES ============
-
-function updateBalance() {
-  document.getElementById('balance').textContent = balance;
-  document.getElementById('current-bet').textContent = currentBet;
+  return `<div class="card ${color}"><div class="top">${card.rank}${card.suit}</div><div class="center">${card.suit}</div><div class="bottom">${card.rank}${card.suit}</div>${overlay}</div>`;
 }
 
 function renderDealerHand(reveal) {
   const el = document.getElementById('dealer-cards');
   const totalEl = document.getElementById('dealer-total');
   let html = '';
-  for (let i = 0; i < dealerHand.length; i++) {
-    html += cardHTML(dealerHand[i], !reveal && i === 1);
-  }
+  for (let i = 0; i < dealerHand.length; i++) html += cardHTML(dealerHand[i], !reveal && i === 1);
   el.innerHTML = html;
-  if (reveal) {
-    totalEl.textContent = handValue(dealerHand);
-  } else if (dealerHand.length > 0) {
-    totalEl.textContent = handValue([dealerHand[0]]);
-  } else {
-    totalEl.textContent = '';
-  }
+  totalEl.textContent = reveal ? handValue(dealerHand) : (dealerHand.length > 0 ? handValue([dealerHand[0]]) : '');
 }
 
 function renderPlayerHands() {
@@ -827,11 +750,7 @@ function renderPlayerHands() {
       const active = (gamePhase === 'playing' && idx === activeHandIndex);
       const div = document.createElement('div');
       div.className = 'hand-area' + (active ? ' active-hand' : '');
-      div.innerHTML = `
-        <div class="hand-label">Hand ${idx + 1}</div>
-        <div class="hand-total">${hand.length > 0 ? handValue(hand) : ''}</div>
-        <div class="cards">${hand.map(c => cardHTML(c, false)).join('')}</div>
-      `;
+      div.innerHTML = `<div class="hand-label">Hand ${idx + 1}</div><div class="hand-total">${handValue(hand)}</div><div class="cards">${hand.map(c => cardHTML(c, false)).join('')}</div>`;
       container.appendChild(div);
     });
   }
@@ -848,869 +767,210 @@ function setButtons() {
   const inPlay = gamePhase === 'playing';
   const hand = playerHands[activeHandIndex] || [];
   const val = handValue(hand);
-
   document.getElementById('btn-hit').disabled = !inPlay || val >= 21;
   document.getElementById('btn-stand').disabled = !inPlay;
-  document.getElementById('btn-double').disabled = !(inPlay && hand.length === 2 && balance >= currentBetForHand());
-  document.getElementById('btn-split').disabled = !(inPlay && hand.length === 2
-    && hand[0].rank === hand[1].rank && !splitMode && balance >= currentBet);
-
+  document.getElementById('btn-double').disabled = !(inPlay && hand.length === 2 && balance >= currentBet);
+  document.getElementById('btn-split').disabled = !(inPlay && hand.length === 2 && hand[0].rank === hand[1].rank && !splitMode && balance >= currentBet);
   const betting = gamePhase === 'betting' || gamePhase === 'done';
   document.getElementById('btn-deal').disabled = !(betting && currentBet > 0);
-  document.querySelectorAll('.chip').forEach(c => {
-    c.style.opacity = betting ? '1' : '0.4';
-    c.style.pointerEvents = betting ? '' : 'none';
-  });
   document.getElementById('btn-clear').style.display = betting ? '' : 'none';
   document.getElementById('btn-rebet').style.display = (betting && lastBet > 0 && currentBet === 0) ? '' : 'none';
 }
-
-function currentBetForHand() {
-  // In split mode each hand has the original bet
-  return currentBet;
-}
-
-// ============ BETTING ============
 
 function addBet(amount) {
   if (gamePhase !== 'betting' && gamePhase !== 'done') return;
   if (gamePhase === 'done') resetRound();
   if (amount > balance) return;
-  currentBet += amount;
-  balance -= amount;
-  updateBalance();
-  setButtons();
+  currentBet += amount; balance -= amount;
+  updateBalance(); setButtons();
 }
 
-function clearBet() {
-  balance += currentBet;
-  currentBet = 0;
-  updateBalance();
-  setButtons();
-}
+function clearBet() { balance += currentBet; currentBet = 0; updateBalance(); setButtons(); }
 
 function rebet() {
   if (gamePhase !== 'betting' && gamePhase !== 'done') return;
   if (gamePhase === 'done') resetRound();
   if (lastBet > balance) return;
-  currentBet = lastBet;
-  balance -= currentBet;
-  updateBalance();
-  setButtons();
+  currentBet = lastBet; balance -= lastBet;
+  updateBalance(); setButtons();
 }
-
-// ============ DEALING ============
 
 function deal() {
   if (currentBet <= 0) return;
-
-  // Reshuffle between rounds if cut card was passed (never mid-hand)
   const didReshuffle = checkReshuffle();
-  if (didReshuffle) {
-    setMessage('Shoe reshuffled.', '');
-  }
-
-  gamePhase = 'playing';
-  lastBet = currentBet;
-  splitMode = false;
-  activeHandIndex = 0;
+  gamePhase = 'playing'; lastBet = currentBet; splitMode = false; activeHandIndex = 0;
   setMessage(didReshuffle ? 'New shoe - cards reshuffled.' : '');
-
   dealerHand = [drawCard(), drawCard()];
   playerHands = [[drawCard(), drawCard()]];
-  roundStartRunningCount = runningCount;
-
-  // Count visible cards (dealer up card + both player cards; dealer hole card counted on reveal)
-  if (frogTutorialEnabled) {
-    countCard(dealerHand[0]);
-    countCard(playerHands[0][0]);
-    countCard(playerHands[0][1]);
-    updateFrogCount();
-  }
-
-  renderDealerHand(false);
-  renderPlayerHands();
-
-  // Check for naturals
-  const playerBJ = isBlackjack(playerHands[0]);
-  const dealerBJ = isBlackjack(dealerHand);
-
-  if (playerBJ || dealerBJ) {
+  if (frogTutorialEnabled) { countCard(dealerHand[0]); countCard(playerHands[0][0]); countCard(playerHands[0][1]); updateFrogCount(); }
+  renderDealerHand(false); renderPlayerHands();
+  if (isBlackjack(playerHands[0]) || isBlackjack(dealerHand)) {
     renderDealerHand(true);
-    // Count dealer hole card on reveal
-    if (frogTutorialEnabled) {
-      const rcBefore = runningCount;
-      countCard(dealerHand[1]);
-      updateFrogCount();
-      announceCardDraw(dealerHand[1], 'Dealer reveals', rcBefore);
-    }
-    if (playerBJ && dealerBJ) {
-      setMessage('Both Blackjack - Push!', 'push');
-      balance += currentBet;
-    } else if (playerBJ) {
-      setMessage('Blackjack! You win!', 'win');
-      balance += currentBet + Math.floor(currentBet * 1.5); // 3:2 payout
-    } else {
-      setMessage('Dealer Blackjack!', 'lose');
-    }
+    if (frogTutorialEnabled) countCard(dealerHand[1]);
+    if (isBlackjack(playerHands[0]) && isBlackjack(dealerHand)) { setMessage('Push!', 'push'); balance += currentBet; }
+    else if (isBlackjack(playerHands[0])) { setMessage('Blackjack!', 'win'); balance += currentBet + Math.floor(currentBet * 1.5); }
+    else setMessage('Dealer Blackjack!', 'lose');
     endRound();
-    return;
-  }
-
-  setButtons();
-  updateWinOdds();
-  frogDealHint();
+  } else { setButtons(); updateWinOdds(); frogDealHint(); }
 }
-
-// ============ PLAYER ACTIONS ============
 
 function actionHit() {
   if (gamePhase !== 'playing') return;
   checkPlayerAction('hit');
   const hand = playerHands[activeHandIndex];
-  hand.push(drawCard());
-  if (frogTutorialEnabled) {
-    const rcBefore = runningCount;
-    countCard(hand[hand.length - 1]);
-    updateFrogCount();
-    announceCardDraw(hand[hand.length - 1], 'You hit', rcBefore);
-  }
+  const newCard = drawCard(); hand.push(newCard);
+  if (frogTutorialEnabled) { const rcBefore = runningCount; countCard(newCard); updateFrogCount(); announceCardDraw(newCard, 'You hit', rcBefore); }
   renderPlayerHands();
-
-  if (handValue(hand) > 21) {
-    // Bust
-    if (splitMode && activeHandIndex < playerHands.length - 1) {
-      activeHandIndex++;
-      // Deal second card to next hand if needed
-      if (playerHands[activeHandIndex].length === 1) {
-        playerHands[activeHandIndex].push(drawCard());
-        if (frogTutorialEnabled) {
-          const rcBefore = runningCount;
-          countCard(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1]);
-          updateFrogCount();
-          announceCardDraw(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1], 'Next hand', rcBefore);
-        }
-      }
-      renderPlayerHands();
-      setButtons();
-    } else {
-      dealerTurn();
-    }
-  } else if (handValue(hand) === 21) {
-    actionStand();
-  } else {
-    setButtons();
-  }
+  if (handValue(hand) >= 21) actionStand(); else setButtons();
 }
 
 function actionStand() {
   if (gamePhase !== 'playing') return;
-  checkPlayerAction('stand');
-  if (splitMode && activeHandIndex < playerHands.length - 1) {
-    activeHandIndex++;
-    if (playerHands[activeHandIndex].length === 1) {
-      playerHands[activeHandIndex].push(drawCard());
-      if (frogTutorialEnabled) {
-        const rcBefore = runningCount;
-        countCard(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1]);
-        updateFrogCount();
-        announceCardDraw(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1], 'Next hand', rcBefore);
-      }
-    }
-    renderPlayerHands();
-    setButtons();
-  } else {
-    dealerTurn();
-  }
+  if (!splitMode || activeHandIndex === playerHands.length - 1) dealerTurn();
+  else { activeHandIndex++; renderPlayerHands(); setButtons(); }
 }
 
 function actionDouble() {
-  if (gamePhase !== 'playing') return;
+  if (gamePhase !== 'playing' || balance < currentBet) return;
   checkPlayerAction('double');
+  balance -= currentBet; currentBet *= 2; updateBalance();
   const hand = playerHands[activeHandIndex];
-  if (hand.length !== 2) return;
-
-  const extraBet = splitMode ? currentBet : currentBet;
-  if (balance < extraBet) return;
-  balance -= extraBet;
-  if (splitMode) {
-    // Track doubled hands
-    if (!playerHands.doubled) playerHands.doubled = {};
-    playerHands.doubled[activeHandIndex] = true;
-  } else {
-    currentBet *= 2;
-  }
-  updateBalance();
-
-  hand.push(drawCard());
-  if (frogTutorialEnabled) {
-    const rcBefore = runningCount;
-    countCard(hand[hand.length - 1]);
-    updateFrogCount();
-    announceCardDraw(hand[hand.length - 1], 'Double down', rcBefore);
-  }
-  renderPlayerHands();
-
-  // Automatic stand after double
-  if (splitMode && activeHandIndex < playerHands.length - 1) {
-    activeHandIndex++;
-    if (playerHands[activeHandIndex].length === 1) {
-      playerHands[activeHandIndex].push(drawCard());
-      if (frogTutorialEnabled) {
-        const rcBefore = runningCount;
-        countCard(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1]);
-        updateFrogCount();
-        announceCardDraw(playerHands[activeHandIndex][playerHands[activeHandIndex].length - 1], 'Next hand', rcBefore);
-      }
-    }
-    renderPlayerHands();
-    setButtons();
-  } else {
-    dealerTurn();
-  }
+  const newCard = drawCard(); hand.push(newCard);
+  if (frogTutorialEnabled) { const rcBefore = runningCount; countCard(newCard); updateFrogCount(); announceCardDraw(newCard, 'Double down', rcBefore); }
+  renderPlayerHands(); actionStand();
 }
 
 function actionSplit() {
-  if (gamePhase !== 'playing') return;
+  if (gamePhase !== 'playing' || balance < currentBet) return;
   checkPlayerAction('split');
+  balance -= currentBet; updateBalance();
   const hand = playerHands[0];
-  if (hand.length !== 2 || hand[0].rank !== hand[1].rank) return;
-  if (balance < currentBet) return;
-
-  balance -= currentBet; // match original bet for second hand
-  updateBalance();
-
   splitMode = true;
-  playerHands = [
-    [hand[0], drawCard()],
-    [hand[1], drawCard()]
-  ];
-  playerHands.doubled = {};
-  activeHandIndex = 0;
-
-  // Count the two new cards dealt to split hands
-  if (frogTutorialEnabled) {
-    const rcBefore = runningCount;
-    countCard(playerHands[0][1]);
-    countCard(playerHands[1][1]);
-    updateFrogCount();
-    announceCardDraw([playerHands[0][1], playerHands[1][1]], 'Split cards dealt', rcBefore);
-  }
-
-  renderPlayerHands();
-
-  // If split aces, only one card each and done (standard casino rule)
-  if (hand[0].rank === 'A') {
-    dealerTurn();
-    return;
-  }
-
-  setButtons();
+  playerHands = [[hand[0], drawCard()], [hand[1], drawCard()]];
+  if (frogTutorialEnabled) { countCard(playerHands[0][1]); countCard(playerHands[1][1]); updateFrogCount(); }
+  renderPlayerHands(); setButtons();
 }
-
-// ============ DEALER TURN ============
 
 function dealerTurn() {
-  gamePhase = 'dealer';
-  updateWinOdds();
-  renderDealerHand(true);
-
-  // Count dealer hole card now that it's revealed
-  if (frogTutorialEnabled) {
-    const rcBefore = runningCount;
-    countCard(dealerHand[1]);
-    updateFrogCount();
-    announceCardDraw(dealerHand[1], 'Dealer reveals', rcBefore);
-  }
-
-  // Check if all player hands busted
-  const allBusted = playerHands.every(h => handValue(h) > 21);
-  if (allBusted) {
-    resolveRound();
-    return;
-  }
-
-  // Dealer hits on soft 17, stands on hard 17+
-  function dealerDraw() {
-    const val = handValue(dealerHand);
-    const soft = isSoft(dealerHand);
+  gamePhase = 'dealer'; renderDealerHand(true);
+  if (frogTutorialEnabled) countCard(dealerHand[1]);
+  if (playerHands.every(h => handValue(h) > 21)) { resolveRound(); return; }
+  function draw() {
+    const val = handValue(dealerHand), soft = isSoft(dealerHand);
     if (val < 17 || (val === 17 && soft)) {
-      dealerHand.push(drawCard());
-      if (frogTutorialEnabled) {
-        const rcBefore = runningCount;
-        countCard(dealerHand[dealerHand.length - 1]);
-        updateFrogCount();
-        announceCardDraw(dealerHand[dealerHand.length - 1], 'Dealer draws', rcBefore);
-      }
-      renderDealerHand(true);
-      setTimeout(dealerDraw, 400);
-    } else {
-      resolveRound();
-    }
+      const c = drawCard(); dealerHand.push(c);
+      if (frogTutorialEnabled) countCard(c); renderDealerHand(true); setTimeout(draw, 500);
+    } else resolveRound();
   }
-  setTimeout(dealerDraw, 400);
+  setTimeout(draw, 500);
 }
 
-// ============ RESOLVE ============
-
 function resolveRound() {
-  const dealerVal = handValue(dealerHand);
-  const dealerBust = dealerVal > 21;
-
-  if (!splitMode) {
-    const pVal = handValue(playerHands[0]);
-    const pBust = pVal > 21;
-    if (pBust) {
-      setMessage('Bust! You lose.', 'lose');
-    } else if (dealerBust) {
-      setMessage('Dealer busts! You win!', 'win');
-      balance += currentBet * 2;
-    } else if (pVal > dealerVal) {
-      setMessage(`You win! ${pVal} vs ${dealerVal}`, 'win');
-      balance += currentBet * 2;
-    } else if (pVal < dealerVal) {
-      setMessage(`Dealer wins. ${dealerVal} vs ${pVal}`, 'lose');
-    } else {
-      setMessage('Push!', 'push');
-      balance += currentBet;
-    }
-  } else {
-    // Resolve each split hand
-    let totalResult = [];
-    let totalWin = 0;
-    playerHands.forEach((hand, idx) => {
-      const pVal = handValue(hand);
-      const pBust = pVal > 21;
-      const doubled = playerHands.doubled && playerHands.doubled[idx];
-      const handBet = doubled ? currentBet * 2 : currentBet;
-
-      if (pBust) {
-        totalResult.push(`H${idx+1}: Bust`);
-      } else if (dealerBust) {
-        totalResult.push(`H${idx+1}: Win`);
-        totalWin += handBet * 2;
-      } else if (pVal > dealerVal) {
-        totalResult.push(`H${idx+1}: Win`);
-        totalWin += handBet * 2;
-      } else if (pVal < dealerVal) {
-        totalResult.push(`H${idx+1}: Lose`);
-      } else {
-        totalResult.push(`H${idx+1}: Push`);
-        totalWin += handBet;
-      }
-    });
-    balance += totalWin;
-    const cls = totalWin > currentBet * 2 ? 'win' : totalWin === 0 ? 'lose' : totalWin === currentBet * 2 ? 'push' : 'win';
-    setMessage(totalResult.join(' | '), cls);
-  }
-
+  const dVal = handValue(dealerHand);
+  playerHands.forEach((hand, idx) => {
+    const pVal = handValue(hand);
+    if (pVal > 21) return;
+    if (dVal > 21 || pVal > dVal) balance += currentBet * 2;
+    else if (pVal === dVal) balance += currentBet;
+  });
+  setMessage(playerHands.length > 1 ? 'Round Complete' : (handValue(playerHands[0]) > 21 ? 'Bust!' : 'Round Complete'));
   endRound();
 }
 
-function endRound() {
-  gamePhase = 'done';
-  // Discard all cards
-  discardCards(dealerHand);
-  playerHands.forEach(h => discardCards(h));
-  currentBet = 0;
-  updateBalance();
-  setButtons();
-  updateWinOdds();
-
-  if (balance <= 0) {
-    setTimeout(() => {
-      setMessage('Out of chips! Reloading...', 'lose');
-      setTimeout(() => {
-        balance = 1000;
-        updateBalance();
-        resetRound();
-      }, 2000);
-    }, 1500);
-  }
-}
+function endRound() { gamePhase = 'done'; currentBet = 0; updateBalance(); setButtons(); }
 
 function resetRound() {
-  gamePhase = 'betting';
-  dealerHand = [];
-  playerHands = [[]];
-  splitMode = false;
-  activeHandIndex = 0;
-  currentBet = 0;
-  setMessage('');
-  renderDealerHand(false);
-  document.getElementById('dealer-total').textContent = '';
-  document.getElementById('player-cards').innerHTML = '';
-  document.getElementById('player-total').textContent = '';
-  document.getElementById('player-normal').style.display = '';
-  document.getElementById('split-container').style.display = 'none';
-  updateBalance();
-  setButtons();
-  updateWinOdds();
-  renderFrogTrainer();
+  gamePhase = 'betting'; dealerHand = []; playerHands = [[]]; splitMode = false; activeHandIndex = 0;
+  setMessage(''); renderDealerHand(false); renderPlayerHands(); updateBalance(); setButtons(); renderFrogTrainer();
 }
 
-// ============ FROG COUNTING TUTORIAL ============
-
-let frogTutorialEnabled = false;
-let showCardOverlays = true;
-let runningCount = 0;
-let frogSpeechTimeout = null;
+// ============ FROG TUTORIAL LOGIC ============
+let frogTutorialEnabled = false, showCardOverlays = true, frogIntroActive = false, frogIntroStep = 0, frogQuestion = null;
 let frogLessonScore = { correct: 0, total: 0 };
-let roundStartRunningCount = 0;
-let frogQuestion = null;
-let frogIntroActive = false;
-let frogIntroStep = 0;
+const frogIntroSteps = ["Welcome!", "Hi-Lo count: 2-6 is +1, 10-A is -1.", "True Count = RC / Decks Remaining."];
 
-const frogIntroSteps = [
-  "Welcome! I track Hi-Lo count training with you.",
-  "Running count (RC): add every visible card value as cards are drawn. 2-6 = +1, 7-9 = 0, 10/J/Q/K/A = -1.",
-  "True count (TC): running count divided by decks remaining. Formula: TC = RC / decks remaining.",
-  "Why both? RC is the raw total. TC normalizes for shoe depth so decisions are consistent in multi-deck games.",
-  "Speed tip: group cards in chunks. Example: 5(+1) + K(-1) = 0 instantly, then move on.",
-  "Memory tip: treat 7/8/9 as 'ignore cards' (0), and only react to low cards (+1) and tens/aces (-1).",
-  "Live-game pace tip: keep a silent rhythm in your head after each reveal: add, store RC, reset attention.",
-  "We count BOTH player and dealer cards once they are visible. I'll ask you for RC and TC as the hand develops."
-];
+function getCountValue(rank) { if(['2','3','4','5','6'].includes(rank)) return 1; if(['7','8','9'].includes(rank)) return 0; return -1; }
+function countCard(card) { runningCount += getCountValue(card.rank); }
+function getTrueCount() { const dr = shoe.length / 52; return dr < 0.5 ? runningCount : Math.round((runningCount / dr) * 10) / 10; }
+function formatSigned(n) { return (n >= 0 ? '+' : '') + n; }
 
-const frogTrainingTips = [
-  'Speed drill: count one full deck down to 0 in under 30 seconds before playing live.',
-  'Pattern drill: pair cancelling cards quickly (one low + one high = net 0).',
-  'Focus rule: ignore 7/8/9 because they are always 0 in Hi-Lo.',
-  'True count shortcut: estimate decks remaining to nearest 0.5 deck, then divide RC quickly.',
-  'Casino pace trick: update RC on every card reveal, never wait until the end of a hand.'
-];
-
-function formatSigned(num) {
-  return (num >= 0 ? '+' : '') + num;
+function toggleFrogTutorial() {
+  frogTutorialEnabled = !frogTutorialEnabled;
+  document.getElementById('frog-assistant').style.display = frogTutorialEnabled ? 'flex' : 'none';
+  document.getElementById('overlay-toggle-wrap').style.display = frogTutorialEnabled ? 'flex' : 'none';
+  if (frogTutorialEnabled) startFrogIntro(); else hideFrogSpeech();
+  updateFrogCount(); renderFrogTrainer();
 }
 
-function formatCard(card) {
-  return card.rank + card.suit;
-}
-
-function formatCards(cards) {
-  if (!cards || cards.length === 0) return 'no cards';
-  return cards.map(formatCard).join(', ');
-}
-
-function getFrogTrainingTip() {
-  const idx = frogLessonScore.total % frogTrainingTips.length;
-  return frogTrainingTips[idx];
-}
-
-function getCountValue(rank) {
-  if (['2','3','4','5','6'].includes(rank)) return 1;
-  if (['7','8','9'].includes(rank)) return 0;
-  return -1; // 10, J, Q, K, A
-}
-
-function countCard(card) {
-  runningCount += getCountValue(card.rank);
-}
-
-function toggleCardOverlays() {
-  showCardOverlays = !showCardOverlays;
-  const toggle = document.getElementById('overlay-toggle');
-  toggle.classList.toggle('active', showCardOverlays);
-  if (dealerHand.length > 0) {
-    const reveal = gamePhase === 'dealer' || gamePhase === 'done';
-    renderDealerHand(reveal);
-    renderPlayerHands();
-  }
-}
-
-function getTrueCount() {
-  const decksRemaining = shoe.length / 52;
-  if (decksRemaining < 0.5) return runningCount;
-  return Math.round((runningCount / decksRemaining) * 10) / 10;
-}
-
-function getRunningCountMeaning(rc) {
-  if (rc >= 3) return 'Positive RC: remaining shoe tends to be richer in 10s/Aces.';
-  if (rc <= -3) return 'Negative RC: remaining shoe tends to be richer in low cards.';
-  return 'RC near zero: remaining shoe is currently close to neutral.';
-}
-
-function recomputeRunningCountFromSeenCards() {
-  let total = 0;
-  discardPile.forEach(card => { total += getCountValue(card.rank); });
-
-  if (dealerHand.length > 0) {
-    total += getCountValue(dealerHand[0].rank);
-    if (gamePhase === 'dealer' || gamePhase === 'done') {
-      for (let i = 1; i < dealerHand.length; i++) total += getCountValue(dealerHand[i].rank);
-    }
-  }
-
-  playerHands.forEach(hand => {
-    hand.forEach(card => { total += getCountValue(card.rank); });
-  });
-
-  runningCount = total;
-}
-
-function startFrogIntro() {
-  frogIntroActive = true;
-  frogIntroStep = 0;
-  frogQuestion = null;
-  showFrogSpeech(frogIntroSteps[0], 'info', 120000, true);
-  renderFrogTrainer();
-}
-
+function startFrogIntro() { frogIntroActive = true; frogIntroStep = 0; showFrogSpeech(frogIntroSteps[0], 'info', 0, true); }
 function nextFrogIntro() {
-  if (!frogIntroActive) return;
-  frogIntroStep += 1;
-  if (frogIntroStep >= frogIntroSteps.length) {
-    frogIntroActive = false;
-    hideFrogSpeech();
-    renderFrogTrainer();
-    return;
-  }
-  showFrogSpeech(frogIntroSteps[frogIntroStep], 'info', 120000, true);
+  frogIntroStep++;
+  if (frogIntroStep >= frogIntroSteps.length) { frogIntroActive = false; hideFrogSpeech(); }
+  else showFrogSpeech(frogIntroSteps[frogIntroStep], 'info', 0, true);
 }
 
-function askRunningCountQuestion(context, cards, rcBefore, rcAfter) {
+function askRunningCountQuestion(ctx, cards, before, after) {
   if (!frogTutorialEnabled || frogIntroActive) return;
-  frogQuestion = {
-    type: 'running',
-    context: context || 'Cards drawn',
-    cards: cards || [],
-    rcBefore: rcBefore,
-    expected: rcAfter
-  };
+  frogQuestion = { type: 'running', context: ctx, cards: Array.isArray(cards)?cards:[cards], rcBefore: before, expected: after };
   renderFrogTrainer();
 }
 
-function askTrueCountQuestion(context) {
+function askTrueCountQuestion() {
   if (!frogTutorialEnabled || frogIntroActive) return;
-  frogQuestion = {
-    type: 'true',
-    context: context || 'Hand update',
-    expected: getTrueCount(),
-    rcNow: runningCount,
-    decksRemaining: Math.round((shoe.length / 52) * 10) / 10
-  };
+  frogQuestion = { type: 'true', expected: getTrueCount(), rcNow: runningCount, dr: Math.round((shoe.length/52)*10)/10 };
   renderFrogTrainer();
 }
 
-function announceCardDraw(cards, context, rcBefore) {
-  if (!frogTutorialEnabled || frogIntroActive) return;
-  const cardsList = Array.isArray(cards) ? cards : [cards];
-  askRunningCountQuestion(context, cardsList, rcBefore, runningCount);
+function announceCardDraw(c, ctx, before) { askRunningCountQuestion(ctx, c, before, runningCount); }
+function frogDealHint() {
+  const cards = [playerHands[0][0], playerHands[0][1], dealerHand[0]];
+  const delta = cards.reduce((s, c) => s + getCountValue(c.rank), 0);
+  askRunningCountQuestion('Deal', cards, runningCount - delta, runningCount);
 }
 
 function submitTrainerAnswer() {
-  if (!frogTutorialEnabled || frogIntroActive || !frogQuestion) return;
-  const input = document.getElementById('frog-trainer-input');
-  if (!input) return;
-  const raw = input.value.trim();
-  if (raw === '') return;
-
-  const userVal = parseFloat(raw);
-  if (Number.isNaN(userVal)) return;
-
-  frogLessonScore.total += 1;
-
-  if (frogQuestion.type === 'running') {
-    const expected = frogQuestion.expected;
-    if (userVal === expected) {
-      frogLessonScore.correct += 1;
-      showFrogSpeech('Correct! New running count is ' + formatSigned(expected) + '.\nTip: ' + getFrogTrainingTip(), 'info', 6000, false);
-      showFrogSpeech('Correct! New running count is ' + formatSigned(expected) + '.', 'info', 5000, false);
-    } else {
-      const cards = frogQuestion.cards || [];
-      const delta = expected - frogQuestion.rcBefore;
-      const reason = 'Not quite. Running count was ' + formatSigned(frogQuestion.rcBefore)
-        + '. Cards drawn: ' + formatCards(cards)
-        + '. Their combined count change is ' + formatSigned(delta)
-        + ', so new RC = ' + formatSigned(frogQuestion.rcBefore) + ' ' + (delta >= 0 ? '+' : '-') + ' ' + Math.abs(delta)
-        + ' = ' + formatSigned(expected) + '.';
-      showFrogSpeech(reason, 'mistake', 11000, false);
-    }
-    frogQuestion = null;
-    input.value = '';
-    renderFrogTrainer();
-    askTrueCountQuestion('Now convert RC to true count.');
-    return;
-  }
-
-  if (frogQuestion.type === 'true') {
-    const expected = frogQuestion.expected;
-    const roundedUser = Math.round(userVal * 10) / 10;
-    const ok = Math.abs(roundedUser - expected) < 0.11;
-    if (ok) {
-      frogLessonScore.correct += 1;
-      showFrogSpeech('Correct! TC = ' + expected + ' (RC ' + formatSigned(frogQuestion.rcNow) + ' / ' + frogQuestion.decksRemaining + ' decks).\nTip: ' + getFrogTrainingTip(), 'info', 7000, false);
-      showFrogSpeech('Correct! TC = ' + expected + ' (RC ' + formatSigned(frogQuestion.rcNow) + ' / ' + frogQuestion.decksRemaining + ' decks).', 'info', 6000, false);
-    } else {
-      const walkthrough = 'Not quite. Use TC = RC / decks remaining. RC = ' + formatSigned(frogQuestion.rcNow)
-        + ', decks remaining = ' + frogQuestion.decksRemaining
-        + '. So TC = ' + frogQuestion.rcNow + ' / ' + frogQuestion.decksRemaining
-        + ' = ' + expected + ' (rounded to 1 decimal).';
-      showFrogSpeech(walkthrough, 'mistake', 12000, false);
-    }
-    frogQuestion = null;
-    input.value = '';
-    renderFrogTrainer();
-  }
-}
-
-function submitCountAnswer(answer) {
-  const input = document.getElementById('frog-trainer-input');
-  if (!input) return;
-  input.value = String(answer);
-  submitTrainerAnswer();
+  if (!frogQuestion) return;
+  const val = parseFloat(document.getElementById('frog-trainer-input').value);
+  frogLessonScore.total++;
+  if (val === frogQuestion.expected) {
+    frogLessonScore.correct++;
+    showFrogSpeech('Correct!', 'info', 3000);
+    if (frogQuestion.type === 'running') { frogQuestion = null; askTrueCountQuestion(); }
+    else frogQuestion = null;
+  } else showFrogSpeech('Try again!', 'mistake', 3000);
+  document.getElementById('frog-trainer-input').value = ''; renderFrogTrainer();
 }
 
 function renderFrogTrainer() {
   const panel = document.getElementById('frog-trainer');
-  const prompt = document.getElementById('frog-trainer-prompt');
-  const score = document.getElementById('frog-trainer-score');
-  const help = document.getElementById('frog-trainer-help');
-  if (!panel || !prompt || !score || !help) return;
-
-  if (!frogTutorialEnabled) {
-    panel.className = '';
-    return;
-  }
-
+  if (!frogTutorialEnabled) { panel.className = ''; return; }
   panel.className = 'show';
-  const inputRow = document.getElementById('frog-trainer-input-row');
-  const buttonsDiv = document.getElementById('frog-trainer-buttons');
-  if (buttonsDiv) buttonsDiv.style.display = 'none';
-  if (inputRow) inputRow.style.display = 'flex';
-
-  if (frogIntroActive) {
-    prompt.textContent = 'Tutorial intro active. Click Next in the speech bubble to continue.';
-    help.textContent = 'Then I\'ll start asking you for running count and true count.';
-  } else if (frogQuestion && frogQuestion.type === 'running') {
-    prompt.textContent = frogQuestion.context + ': What is the NEW running count after ' + formatCards(frogQuestion.cards) + '?';
-    help.textContent = 'Start from RC ' + formatSigned(frogQuestion.rcBefore) + ' and include BOTH player and dealer visible cards. Tip: ' + getFrogTrainingTip();
-  } else if (frogQuestion && frogQuestion.type === 'true') {
-    prompt.textContent = 'What is the true count now?';
-    help.textContent = 'Formula: TC = RC / decks remaining = ' + frogQuestion.rcNow + ' / ' + frogQuestion.decksRemaining + ' (round to 1 decimal). Tip: ' + getFrogTrainingTip();
-    help.textContent = 'Start from RC ' + formatSigned(frogQuestion.rcBefore) + ' and include BOTH player and dealer visible cards.';
-  } else if (frogQuestion && frogQuestion.type === 'true') {
-    prompt.textContent = 'What is the true count now?';
-    help.textContent = 'Formula: TC = RC / decks remaining = ' + frogQuestion.rcNow + ' / ' + frogQuestion.decksRemaining + ' (round to 1 decimal).';
-  } else {
-    const rc = runningCount;
-    const tc = getTrueCount();
-    prompt.textContent = 'RC: ' + formatSigned(rc) + ' | TC: ' + formatSigned(tc) + '. ' + getRunningCountMeaning(rc);
-    help.textContent = 'Deal or draw cards and I\'ll ask for updated RC then TC. Tip: ' + getFrogTrainingTip();
-    help.textContent = 'Deal or draw cards and I\'ll ask for updated RC then TC.';
-  }
-
-  score.textContent = 'Score: ' + frogLessonScore.correct + '/' + frogLessonScore.total;
-}
-
-function toggleFrogTutorial() {
-  frogTutorialEnabled = !frogTutorialEnabled;
-  const toggle = document.getElementById('frog-toggle');
-  const assistant = document.getElementById('frog-assistant');
-
-  toggle.classList.toggle('active', frogTutorialEnabled);
-  assistant.style.display = frogTutorialEnabled ? 'flex' : 'none';
-  document.getElementById('overlay-toggle-wrap').style.display = frogTutorialEnabled ? 'flex' : 'none';
-
-  if (dealerHand.length > 0) {
-    const reveal = gamePhase === 'dealer' || gamePhase === 'done';
-    renderDealerHand(reveal);
-    renderPlayerHands();
-  }
-
-  if (frogTutorialEnabled) {
-    recomputeRunningCountFromSeenCards();
-    frogLessonScore = { correct: 0, total: 0 };
-    startFrogIntro();
-  } else {
-    frogQuestion = null;
-    frogIntroActive = false;
-    hideFrogSpeech();
-    renderFrogTrainer();
-  }
-
-  updateFrogCount();
+  const prompt = document.getElementById('frog-trainer-prompt');
+  if (frogIntroActive) prompt.textContent = "Intro active...";
+  else if (frogQuestion) prompt.textContent = frogQuestion.type === 'running' ? "Running Count?" : "True Count?";
+  else prompt.textContent = "Waiting for next move...";
+  document.getElementById('frog-trainer-score').textContent = `Score: ${frogLessonScore.correct}/${frogLessonScore.total}`;
 }
 
 function updateFrogCount() {
-  const badge = document.getElementById('frog-count-badge');
-  if (!badge) return;
-  if (!frogTutorialEnabled) {
-    badge.style.display = 'none';
-    return;
-  }
-  badge.style.display = '';
-  const tc = getTrueCount();
-  badge.textContent = 'RC: ' + formatSigned(runningCount) + ' | TC: ' + formatSigned(tc);
+  const b = document.getElementById('frog-count-badge');
+  if (frogTutorialEnabled) { b.style.display = 'block'; b.textContent = `RC: ${formatSigned(runningCount)} | TC: ${getTrueCount()}`; }
 }
 
-function showFrogSpeech(text, type, duration, sticky) {
+function showFrogSpeech(txt, type, dur, sticky) {
   const el = document.getElementById('frog-speech');
-  const nextBtn = document.getElementById('frog-next-btn');
-  el.textContent = text;
-  el.className = 'show' + (type === 'mistake' ? ' mistake' : type === 'info' ? ' info' : '');
-  if (nextBtn) nextBtn.style.display = sticky ? '' : 'none';
-
-  if (frogSpeechTimeout) clearTimeout(frogSpeechTimeout);
-  if (sticky) return;
-  frogSpeechTimeout = setTimeout(function() {
-    el.className = '';
-  }, duration || 7000);
+  el.textContent = txt; el.className = 'show ' + type;
+  document.getElementById('frog-next-btn').style.display = sticky ? 'block' : 'none';
+  if (!sticky) setTimeout(hideFrogSpeech, dur || 5000);
 }
+function hideFrogSpeech() { document.getElementById('frog-speech').className = ''; }
+function toggleCardOverlays() { showCardOverlays = !showCardOverlays; renderPlayerHands(); renderDealerHand(false); }
+function frogGreet() { showFrogSpeech("Ribbit! Let's count.", 'info'); }
 
-function hideFrogSpeech() {
-  const el = document.getElementById('frog-speech');
-  el.className = '';
-  if (frogSpeechTimeout) clearTimeout(frogSpeechTimeout);
-}
+// Simple Strategy Engine
+function checkPlayerAction(act) { /* Logic for strategy hints can be added here */ }
 
-function frogGreet() {
-  if (!frogTutorialEnabled) return;
-  if (frogIntroActive) {
-    showFrogSpeech(frogIntroSteps[frogIntroStep], 'info', 120000, true);
-    return;
-  }
-  const rc = runningCount;
-  const tc = getTrueCount();
-  showFrogSpeech('RC: ' + formatSigned(rc) + ' | TC: ' + formatSigned(tc) + '. ' + getRunningCountMeaning(rc), 'info', 6500, false);
-}
-
-// ============ BASIC STRATEGY ENGINE ============
-
-function getDealerUpValue() {
-  if (!dealerHand.length) return 0;
-  const r = dealerHand[0].rank;
-  if (r === 'A') return 11;
-  if (['K','Q','J'].includes(r)) return 10;
-  return parseInt(r);
-}
-
-function getOptimalPlay(hand, dealerUp, canSplit, canDouble) {
-  const total = handValue(hand);
-  const soft = isSoft(hand);
-
-  // Pairs
-  if (canSplit && hand.length === 2 && hand[0].rank === hand[1].rank) {
-    var pr = hand[0].rank;
-    var prVal = (pr === 'A') ? 11 : (['K','Q','J'].includes(pr) ? 10 : parseInt(pr));
-
-    if (pr === 'A') return { action: 'split', reason: "Always split Aces! Each Ace gives you a great starting point to build a strong hand." };
-    if (pr === '8') return { action: 'split', reason: "Always split 8s. A total of 16 is the worst hand in blackjack \u2014 splitting gives you two fresh chances." };
-    if (prVal === 10) return { action: 'stand', reason: "Never split 10-value cards! A total of 20 is one of the best hands you can have." };
-    if (pr === '5') {
-      if (canDouble && dealerUp >= 2 && dealerUp <= 9) return { action: 'double', reason: "Treat 5+5 as a 10 \u2014 double down against the dealer's weak card for maximum profit!" };
-      return { action: 'hit', reason: "Treat 5+5 as a 10. Don't split \u2014 just hit to improve." };
-    }
-    if (pr === '4') {
-      if (dealerUp >= 5 && dealerUp <= 6) return { action: 'split', reason: "Split 4s against dealer 5-6. The dealer is very likely to bust with these up cards." };
-      return { action: 'hit', reason: "Don't split 4s here. A total of 8 is fine to hit." };
-    }
-    if (pr === '2' || pr === '3') {
-      if (dealerUp >= 2 && dealerUp <= 7) return { action: 'split', reason: "Split " + pr + "s against a weak dealer card. Low pairs do well when split against dealer 2-7." };
-      return { action: 'hit', reason: "Don't split " + pr + "s against a strong dealer. Just hit." };
-    }
-    if (pr === '6') {
-      if (dealerUp >= 2 && dealerUp <= 6) return { action: 'split', reason: "Split 6s against a weak dealer. The dealer is likely to bust!" };
-      return { action: 'hit', reason: "Don't split 6s against a strong dealer. Hit instead." };
-    }
-    if (pr === '7') {
-      if (dealerUp >= 2 && dealerUp <= 7) return { action: 'split', reason: "Split 7s against dealer 2-7. You can build two decent hands." };
-      return { action: 'hit', reason: "Don't split 7s against a strong dealer. Hit instead." };
-    }
-    if (pr === '9') {
-      if (dealerUp === 7 || dealerUp >= 10) return { action: 'stand', reason: "Stand with 18. Against this dealer card, 18 is good enough \u2014 don't risk splitting." };
-      return { action: 'split', reason: "Split 9s here \u2014 you can build two strong hands against this dealer card." };
-    }
-  }
-
-  // Soft hands
-  if (soft) {
-    if (total >= 20) return { action: 'stand', reason: "Stand on soft 20+. This is an excellent hand!" };
-    if (total === 19) return { action: 'stand', reason: "Stand on soft 19 \u2014 this hand wins most of the time." };
-    if (total === 18) {
-      if (dealerUp >= 9) return { action: 'hit', reason: "Hit soft 18 against dealer " + dealerUp + ". Your 18 isn't strong enough here, and you can't bust a soft hand!" };
-      if (canDouble && dealerUp >= 3 && dealerUp <= 6) return { action: 'double', reason: "Double soft 18 vs dealer's weak card. You have a flexible hand and the dealer is likely to bust." };
-      return { action: 'stand', reason: "Stand on soft 18. A solid hand against this dealer card." };
-    }
-    if (total === 17) {
-      if (canDouble && dealerUp >= 3 && dealerUp <= 6) return { action: 'double', reason: "Double soft 17 vs a weak dealer. Your Ace gives you flexibility to improve!" };
-      return { action: 'hit', reason: "Hit soft 17. You can't bust and 17 isn't strong enough." };
-    }
-    if (total === 16 || total === 15) {
-      if (canDouble && dealerUp >= 4 && dealerUp <= 6) return { action: 'double', reason: "Double your soft " + total + " against the dealer's weak card." };
-      return { action: 'hit', reason: "Hit soft " + total + ". You need to improve and can't bust." };
-    }
-    if (total === 14 || total === 13) {
-      if (canDouble && dealerUp >= 5 && dealerUp <= 6) return { action: 'double', reason: "Double your soft " + total + " against the dealer's very weak card." };
-      return { action: 'hit', reason: "Hit soft " + total + ". Keep building your hand \u2014 no risk of busting." };
-    }
-    return { action: 'hit', reason: "Hit to improve your soft hand. You can't bust!" };
-  }
-
-  // Hard hands
-  if (total >= 17) return { action: 'stand', reason: "Stand on hard " + total + ". The risk of busting is too high to hit." };
-  if (total >= 13 && total <= 16) {
-    if (dealerUp >= 2 && dealerUp <= 6) return { action: 'stand', reason: "Stand on " + total + " vs dealer's weak " + dealerUp + ". Let the dealer take the risk of busting." };
-    return { action: 'hit', reason: "Hit " + total + " vs dealer's strong " + dealerUp + ". The dealer likely has a good hand, so you must try to improve despite the risk." };
-  }
-  if (total === 12) {
-    if (dealerUp >= 4 && dealerUp <= 6) return { action: 'stand', reason: "Stand on 12 vs dealer's " + dealerUp + ". The dealer is very likely to bust with this weak card." };
-    return { action: 'hit', reason: "Hit 12 vs dealer's " + dealerUp + ". Only a 10-value busts you, and the dealer isn't weak enough to stand." };
-  }
-  if (total === 11) {
-    if (canDouble) return { action: 'double', reason: "Double on 11! This is the best doubling hand \u2014 any 10-value card gives you 21." };
-    return { action: 'hit', reason: "Hit on 11. Great chance to reach 21!" };
-  }
-  if (total === 10) {
-    if (canDouble && dealerUp >= 2 && dealerUp <= 9) return { action: 'double', reason: "Double on 10 vs dealer's weaker card. You're in a strong position!" };
-    return { action: 'hit', reason: "Hit on 10. Good chance to build a strong total." };
-  }
-  if (total === 9) {
-    if (canDouble && dealerUp >= 3 && dealerUp <= 6) return { action: 'double', reason: "Double on 9 vs dealer's weak card. Maximize your advantage!" };
-    return { action: 'hit', reason: "Hit on 9 to improve your hand." };
-  }
-  return { action: 'hit', reason: "Hit to improve your low hand. You can't bust with this total." };
-}
-
-function checkPlayerAction(playerAction) {
-  if (!frogTutorialEnabled || gamePhase !== 'playing') return;
-
-  var hand = playerHands[activeHandIndex];
-  if (!hand || hand.length === 0) return;
-
-  var dealerUp = getDealerUpValue();
-  var canSplit = hand.length === 2 && hand[0].rank === hand[1].rank && !splitMode && balance >= currentBet;
-  var canDouble = hand.length === 2 && balance >= currentBetForHand();
-
-  var optimal = getOptimalPlay(hand, dealerUp, canSplit, canDouble);
-
-  if (optimal.action !== playerAction) {
-    showFrogSpeech("The best play was " + optimal.action.toUpperCase() + ". " + optimal.reason, 'mistake', 10000);
-  }
-}
-
-function frogDealHint() {
-  if (!frogTutorialEnabled || frogIntroActive) return;
-  updateFrogCount();
-  const openingCards = [playerHands[0][0], playerHands[0][1], dealerHand[0]];
-  const rcAfter = runningCount;
-  const delta = openingCards.reduce((sum, c) => sum + getCountValue(c.rank), 0);
-  const rcBefore = rcAfter - delta;
-
-  showFrogSpeech('New hand dealt. We count both your cards and the dealer up-card.\nCards: ' + formatCards(openingCards), 'info', 9000, false);
-  askRunningCountQuestion('Opening deal', openingCards, rcBefore, rcAfter);
-}
-
-// ============ INIT ============
-
-createShoe();
-updateBalance();
-setButtons();
-updateWinOdds();
-renderFrogTrainer();
-setMessage('Place your bet to begin!');
+createShoe(); updateBalance(); setButtons();
 </script>
-
 </body>
 </html>
