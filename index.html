@@ -1266,6 +1266,19 @@ const frogIntroSteps = [
   "Running count (RC): add every visible card value as cards are drawn. 2-6 = +1, 7-9 = 0, 10/J/Q/K/A = -1.",
   "True count (TC): running count divided by decks remaining. Formula: TC = RC / decks remaining.",
   "Why both? RC is the raw total. TC normalizes for shoe depth so decisions are consistent in multi-deck games.",
+  "Speed tip: group cards in chunks. Example: 5(+1) + K(-1) = 0 instantly, then move on.",
+  "Memory tip: treat 7/8/9 as 'ignore cards' (0), and only react to low cards (+1) and tens/aces (-1).",
+  "Live-game pace tip: keep a silent rhythm in your head after each reveal: add, store RC, reset attention.",
+  "We count BOTH player and dealer cards once they are visible. I'll ask you for RC and TC as the hand develops."
+];
+
+const frogTrainingTips = [
+  'Speed drill: count one full deck down to 0 in under 30 seconds before playing live.',
+  'Pattern drill: pair cancelling cards quickly (one low + one high = net 0).',
+  'Focus rule: ignore 7/8/9 because they are always 0 in Hi-Lo.',
+  'True count shortcut: estimate decks remaining to nearest 0.5 deck, then divide RC quickly.',
+  'Casino pace trick: update RC on every card reveal, never wait until the end of a hand.'
+];
   "We count BOTH player and dealer cards once they are visible. I'll ask you for RC and TC as the hand develops."
 ];
 
@@ -1280,6 +1293,11 @@ function formatCard(card) {
 function formatCards(cards) {
   if (!cards || cards.length === 0) return 'no cards';
   return cards.map(formatCard).join(', ');
+}
+
+function getFrogTrainingTip() {
+  const idx = frogLessonScore.total % frogTrainingTips.length;
+  return frogTrainingTips[idx];
 }
 
 function getCountValue(rank) {
@@ -1399,6 +1417,7 @@ function submitTrainerAnswer() {
     const expected = frogQuestion.expected;
     if (userVal === expected) {
       frogLessonScore.correct += 1;
+      showFrogSpeech('Correct! New running count is ' + formatSigned(expected) + '.\nTip: ' + getFrogTrainingTip(), 'info', 6000, false);
       showFrogSpeech('Correct! New running count is ' + formatSigned(expected) + '.', 'info', 5000, false);
     } else {
       const cards = frogQuestion.cards || [];
@@ -1423,6 +1442,7 @@ function submitTrainerAnswer() {
     const ok = Math.abs(roundedUser - expected) < 0.11;
     if (ok) {
       frogLessonScore.correct += 1;
+      showFrogSpeech('Correct! TC = ' + expected + ' (RC ' + formatSigned(frogQuestion.rcNow) + ' / ' + frogQuestion.decksRemaining + ' decks).\nTip: ' + getFrogTrainingTip(), 'info', 7000, false);
       showFrogSpeech('Correct! TC = ' + expected + ' (RC ' + formatSigned(frogQuestion.rcNow) + ' / ' + frogQuestion.decksRemaining + ' decks).', 'info', 6000, false);
     } else {
       const walkthrough = 'Not quite. Use TC = RC / decks remaining. RC = ' + formatSigned(frogQuestion.rcNow)
@@ -1467,6 +1487,10 @@ function renderFrogTrainer() {
     help.textContent = 'Then I\'ll start asking you for running count and true count.';
   } else if (frogQuestion && frogQuestion.type === 'running') {
     prompt.textContent = frogQuestion.context + ': What is the NEW running count after ' + formatCards(frogQuestion.cards) + '?';
+    help.textContent = 'Start from RC ' + formatSigned(frogQuestion.rcBefore) + ' and include BOTH player and dealer visible cards. Tip: ' + getFrogTrainingTip();
+  } else if (frogQuestion && frogQuestion.type === 'true') {
+    prompt.textContent = 'What is the true count now?';
+    help.textContent = 'Formula: TC = RC / decks remaining = ' + frogQuestion.rcNow + ' / ' + frogQuestion.decksRemaining + ' (round to 1 decimal). Tip: ' + getFrogTrainingTip();
     help.textContent = 'Start from RC ' + formatSigned(frogQuestion.rcBefore) + ' and include BOTH player and dealer visible cards.';
   } else if (frogQuestion && frogQuestion.type === 'true') {
     prompt.textContent = 'What is the true count now?';
@@ -1475,6 +1499,7 @@ function renderFrogTrainer() {
     const rc = runningCount;
     const tc = getTrueCount();
     prompt.textContent = 'RC: ' + formatSigned(rc) + ' | TC: ' + formatSigned(tc) + '. ' + getRunningCountMeaning(rc);
+    help.textContent = 'Deal or draw cards and I\'ll ask for updated RC then TC. Tip: ' + getFrogTrainingTip();
     help.textContent = 'Deal or draw cards and I\'ll ask for updated RC then TC.';
   }
 
