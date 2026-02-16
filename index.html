@@ -148,12 +148,84 @@ h1 {
 .chip:hover { transform: scale(1.15); }
 .chip:active { transform: scale(0.95); }
 
-.chip[data-val="10"]   { background: radial-gradient(circle, #5588dd, #3366aa); }
-.chip[data-val="20"]   { background: radial-gradient(circle, #44aa55, #228833); }
-.chip[data-val="50"]   { background: radial-gradient(circle, #dd5555, #aa2222); }
-.chip[data-val="100"]  { background: radial-gradient(circle, #222, #444); }
-.chip[data-val="500"]  { background: radial-gradient(circle, #9933cc, #6b1f99); }
-.chip[data-val="1000"] { background: radial-gradient(circle, #ddaa22, #aa7711); }
+.chip[data-val="10"], .wager-chip[data-val="10"]   { background: radial-gradient(circle, #5588dd, #3366aa); }
+.chip[data-val="20"], .wager-chip[data-val="20"]   { background: radial-gradient(circle, #44aa55, #228833); }
+.chip[data-val="50"], .wager-chip[data-val="50"]   { background: radial-gradient(circle, #dd5555, #aa2222); }
+.chip[data-val="100"], .wager-chip[data-val="100"]  { background: radial-gradient(circle, #222, #444); }
+.chip[data-val="500"], .wager-chip[data-val="500"]  { background: radial-gradient(circle, #9933cc, #6b1f99); }
+.chip[data-val="1000"], .wager-chip[data-val="1000"] { background: radial-gradient(circle, #ddaa22, #aa7711); }
+
+#center-bet-area {
+  margin: 6px auto 8px;
+  padding: 10px 14px;
+  max-width: 460px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+#center-bet-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #b8dcb0;
+  text-transform: uppercase;
+}
+
+#bet-pot-chips {
+  min-height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.wager-chip {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px dashed rgba(255,255,255,0.6);
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  position: relative;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+.wager-chip-count {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  padding: 0 5px;
+  background: #f8f8f8;
+  color: #222;
+  border: 1px solid rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.bet-pot-empty {
+  color: #c8d8c2;
+  font-size: 13px;
+}
+
+#bet-pot-total {
+  margin-top: 4px;
+  color: #ffd700;
+  font-weight: bold;
+}
 
 #bet-display {
   font-size: 15px;
@@ -503,6 +575,12 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
 
   <div id="message"></div>
 
+  <div id="center-bet-area">
+    <div id="center-bet-label">Wagered Chips</div>
+    <div id="bet-pot-chips"><div class="bet-pot-empty">Place your bet to see chips</div></div>
+    <div id="bet-pot-total">Total: $0</div>
+  </div>
+
   <div id="player-normal">
     <div class="hand-area" id="player-area">
       <div class="hand-label">Your Hand</div>
@@ -705,9 +783,43 @@ function updateWinOdds() {
 let balance = 1000, currentBet = 0, lastBet = 0, dealerHand = [], playerHands = [], activeHandIndex = 0;
 let gamePhase = 'betting', splitMode = false;
 
+function getChipBreakdown(amount) {
+  const chipValues = [1000, 500, 100, 50, 20, 10];
+  const breakdown = [];
+  let remaining = amount;
+  chipValues.forEach((value) => {
+    const count = Math.floor(remaining / value);
+    if (count > 0) {
+      breakdown.push({ value, count });
+      remaining -= value * count;
+    }
+  });
+  return breakdown;
+}
+
+function renderCenterBetChips() {
+  const chipsEl = document.getElementById('bet-pot-chips');
+  const totalEl = document.getElementById('bet-pot-total');
+  if (!chipsEl || !totalEl) return;
+
+  if (currentBet <= 0) {
+    chipsEl.innerHTML = '<div class="bet-pot-empty">Place your bet to see chips</div>';
+    totalEl.textContent = 'Total: $0';
+    return;
+  }
+
+  const breakdown = getChipBreakdown(currentBet);
+  chipsEl.innerHTML = breakdown.map(({ value, count }) => {
+    const label = value >= 1000 ? '$1K' : `$${value}`;
+    return `<div class="wager-chip" data-val="${value}">${label}<div class="wager-chip-count">x${count}</div></div>`;
+  }).join('');
+  totalEl.textContent = `Total: $${currentBet}`;
+}
+
 function updateBalance() {
   document.getElementById('balance').textContent = balance;
   document.getElementById('current-bet').textContent = currentBet;
+  renderCenterBetChips();
 }
 
 function cardHTML(card, faceDown) {
