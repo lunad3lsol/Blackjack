@@ -107,6 +107,30 @@ h1 {
 .card.red { color: #c0392b; }
 .card.black { color: #222; }
 
+
+.card.dealt {
+  animation: cardPopIn 0.25s ease-out;
+}
+
+.moving-card {
+  position: fixed;
+  z-index: 1200;
+  pointer-events: none;
+  transition: transform 0.35s ease-out, opacity 0.35s ease-out;
+}
+
+.moving-chip {
+  position: fixed;
+  z-index: 1200;
+  pointer-events: none;
+  transition: transform 0.45s ease-out, opacity 0.45s ease-out;
+}
+
+@keyframes cardPopIn {
+  from { transform: translateY(-8px) scale(0.96); opacity: 0.65; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
 #divider {
   height: 1px;
   background: rgba(255,255,255,0.15);
@@ -148,12 +172,84 @@ h1 {
 .chip:hover { transform: scale(1.15); }
 .chip:active { transform: scale(0.95); }
 
-.chip[data-val="10"]   { background: radial-gradient(circle, #5588dd, #3366aa); }
-.chip[data-val="20"]   { background: radial-gradient(circle, #44aa55, #228833); }
-.chip[data-val="50"]   { background: radial-gradient(circle, #dd5555, #aa2222); }
-.chip[data-val="100"]  { background: radial-gradient(circle, #222, #444); }
-.chip[data-val="500"]  { background: radial-gradient(circle, #9933cc, #6b1f99); }
-.chip[data-val="1000"] { background: radial-gradient(circle, #ddaa22, #aa7711); }
+.chip[data-val="10"], .wager-chip[data-val="10"]   { background: radial-gradient(circle, #5588dd, #3366aa); }
+.chip[data-val="20"], .wager-chip[data-val="20"]   { background: radial-gradient(circle, #44aa55, #228833); }
+.chip[data-val="50"], .wager-chip[data-val="50"]   { background: radial-gradient(circle, #dd5555, #aa2222); }
+.chip[data-val="100"], .wager-chip[data-val="100"]  { background: radial-gradient(circle, #222, #444); }
+.chip[data-val="500"], .wager-chip[data-val="500"]  { background: radial-gradient(circle, #9933cc, #6b1f99); }
+.chip[data-val="1000"], .wager-chip[data-val="1000"] { background: radial-gradient(circle, #ddaa22, #aa7711); }
+
+#center-bet-area {
+  margin: 6px auto 8px;
+  padding: 10px 14px;
+  max-width: 460px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+#center-bet-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #b8dcb0;
+  text-transform: uppercase;
+}
+
+#bet-pot-chips {
+  min-height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.wager-chip {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px dashed rgba(255,255,255,0.6);
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  position: relative;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+.wager-chip-count {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  padding: 0 5px;
+  background: #f8f8f8;
+  color: #222;
+  border: 1px solid rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.bet-pot-empty {
+  color: #c8d8c2;
+  font-size: 13px;
+}
+
+#bet-pot-total {
+  margin-top: 4px;
+  color: #ffd700;
+  font-weight: bold;
+}
 
 #bet-display {
   font-size: 15px;
@@ -210,6 +306,34 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
 #message.win  { color: #2ecc71; }
 #message.lose { color: #e74c3c; }
 #message.push { color: #f1c40f; }
+
+
+#win-banner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  font-size: clamp(44px, 10vw, 90px);
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: #ffd700;
+  text-shadow: 0 0 12px rgba(0,0,0,0.65), 0 0 24px rgba(255,215,0,0.45);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 900;
+  white-space: nowrap;
+}
+
+#win-banner.show {
+  animation: winBannerPop 1.1s ease-out forwards;
+}
+
+@keyframes winBannerPop {
+  0% { opacity: 0; transform: translate(-50%, -56%) scale(0.7); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -46%) scale(1.02); }
+}
 
 #shoe-info {
   font-size: 12px;
@@ -502,6 +626,13 @@ button:disabled { opacity: 0.4; cursor: default; transform: none; }
   <div id="divider"></div>
 
   <div id="message"></div>
+  <div id="win-banner"></div>
+
+  <div id="center-bet-area">
+    <div id="center-bet-label">Wagered Chips</div>
+    <div id="bet-pot-chips"><div class="bet-pot-empty">Place your bet to see chips</div></div>
+    <div id="bet-pot-total">Total: $0</div>
+  </div>
 
   <div id="player-normal">
     <div class="hand-area" id="player-area">
@@ -704,10 +835,194 @@ function updateWinOdds() {
 // ============ UI & GAME LOGIC ============
 let balance = 1000, currentBet = 0, lastBet = 0, dealerHand = [], playerHands = [], activeHandIndex = 0;
 let gamePhase = 'betting', splitMode = false;
+let isAnimating = false;
+let audioCtx = null;
+
+function ensureAudioContext() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    audioCtx = new Ctx();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playCardSound() {
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(480, now);
+  osc.frequency.exponentialRampToValueAtTime(220, now + 0.07);
+  gain.gain.setValueAtTime(0.001, now);
+  gain.gain.linearRampToValueAtTime(0.06, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.1);
+}
+
+function playChipSound() {
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(950, now);
+  osc.frequency.exponentialRampToValueAtTime(450, now + 0.06);
+  gain.gain.setValueAtTime(0.001, now);
+  gain.gain.linearRampToValueAtTime(0.045, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.085);
+}
+
+function animateMoveEl(movingEl, fromRect, toRect, randomJitter = 0) {
+  return new Promise((resolve) => {
+    const startX = fromRect.left + fromRect.width / 2;
+    const startY = fromRect.top + fromRect.height / 2;
+    const endX = toRect.left + toRect.width / 2 + (Math.random() * randomJitter * 2 - randomJitter);
+    const endY = toRect.top + toRect.height / 2 + (Math.random() * randomJitter * 2 - randomJitter);
+    movingEl.style.left = `${startX - (movingEl.offsetWidth / 2)}px`;
+    movingEl.style.top = `${startY - (movingEl.offsetHeight / 2)}px`;
+    movingEl.style.transform = 'translate(0, 0) scale(1)';
+    movingEl.style.opacity = '1';
+
+    requestAnimationFrame(() => {
+      movingEl.style.transform = `translate(${endX - startX}px, ${endY - startY}px) scale(0.98)`;
+      movingEl.style.opacity = '0.9';
+    });
+
+    setTimeout(() => {
+      movingEl.remove();
+      resolve();
+    }, 420);
+  });
+}
+
+async function animateCardTo(targetEl, card, faceDown) {
+  const dealerArea = document.getElementById('dealer-area');
+  const fromRect = dealerArea.getBoundingClientRect();
+  const toRect = targetEl.getBoundingClientRect();
+  const moving = document.createElement('div');
+  moving.className = 'moving-card';
+  moving.innerHTML = cardHTML(card, faceDown);
+  document.body.appendChild(moving);
+  playCardSound();
+  await animateMoveEl(moving, fromRect, toRect, 10);
+}
+
+function animateBetChips(amount, reverse = false) {
+  const table = document.getElementById('table');
+  const pot = document.getElementById('center-bet-area');
+  const rack = document.getElementById('chip-rack');
+  if (!table || !pot || !rack || amount <= 0) return;
+  const breakdown = getChipBreakdown(amount);
+  breakdown.forEach(({ value, count }) => {
+    const loops = Math.min(count, 4);
+    for (let i = 0; i < loops; i++) {
+      const moving = document.createElement('div');
+      moving.className = 'wager-chip moving-chip';
+      moving.setAttribute('data-val', String(value));
+      moving.textContent = value >= 1000 ? '$1K' : `$${value}`;
+      document.body.appendChild(moving);
+      const fromRect = reverse ? pot.getBoundingClientRect() : rack.querySelector(`.chip[data-val="${value}"]`)?.getBoundingClientRect() || rack.getBoundingClientRect();
+      const toRect = reverse ? rack.getBoundingClientRect() : pot.getBoundingClientRect();
+      animateMoveEl(moving, fromRect, toRect, 14);
+    }
+  });
+  playChipSound();
+}
+
+async function dealCardToHand(targetType, faceDown = false) {
+  const card = drawCard();
+  if (targetType === 'player') {
+    const hand = playerHands[activeHandIndex];
+    const target = splitMode
+      ? document.querySelectorAll('#split-container .cards')[activeHandIndex]
+      : document.getElementById('player-cards');
+    if (target) await animateCardTo(target, card, false);
+    hand.push(card);
+    if (frogTutorialEnabled) {
+      const rcBefore = runningCount;
+      countCard(card);
+      updateFrogCount();
+      announceCardDraw(card, 'Player draw', rcBefore);
+    }
+    renderPlayerHands();
+  } else {
+    const target = document.getElementById('dealer-cards');
+    if (target) await animateCardTo(target, card, faceDown);
+    dealerHand.push(card);
+    if (frogTutorialEnabled && !faceDown) {
+      const rcBefore = runningCount;
+      countCard(card);
+      updateFrogCount();
+      announceCardDraw(card, 'Dealer draw', rcBefore);
+    }
+    renderDealerHand(false);
+  }
+  return card;
+}
+
+async function dealOpeningHands() {
+  dealerHand = [];
+  playerHands = [[]];
+  splitMode = false;
+  activeHandIndex = 0;
+  renderDealerHand(false);
+  renderPlayerHands();
+
+  await dealCardToHand('player', false);
+  await dealCardToHand('dealer', false);
+  await dealCardToHand('player', false);
+  await dealCardToHand('dealer', true);
+}
+
+function getChipBreakdown(amount) {
+  const chipValues = [1000, 500, 100, 50, 20, 10];
+  const breakdown = [];
+  let remaining = amount;
+  chipValues.forEach((value) => {
+    const count = Math.floor(remaining / value);
+    if (count > 0) {
+      breakdown.push({ value, count });
+      remaining -= value * count;
+    }
+  });
+  return breakdown;
+}
+
+function renderCenterBetChips() {
+  const chipsEl = document.getElementById('bet-pot-chips');
+  const totalEl = document.getElementById('bet-pot-total');
+  if (!chipsEl || !totalEl) return;
+
+  if (currentBet <= 0) {
+    chipsEl.innerHTML = '<div class="bet-pot-empty">Place your bet to see chips</div>';
+    totalEl.textContent = 'Total: $0';
+    return;
+  }
+
+  const breakdown = getChipBreakdown(currentBet);
+  chipsEl.innerHTML = breakdown.map(({ value, count }) => {
+    const label = value >= 1000 ? '$1K' : `$${value}`;
+    return `<div class="wager-chip" data-val="${value}">${label}<div class="wager-chip-count">x${count}</div></div>`;
+  }).join('');
+  totalEl.textContent = `Total: $${currentBet}`;
+}
 
 function updateBalance() {
   document.getElementById('balance').textContent = balance;
   document.getElementById('current-bet').textContent = currentBet;
+  renderCenterBetChips();
 }
 
 function cardHTML(card, faceDown) {
@@ -720,7 +1035,7 @@ function cardHTML(card, faceDown) {
     const cvText = cv > 0 ? '+1' : cv < 0 ? '\u22121' : '0';
     overlay = `<div class="card-count-overlay ${cvClass}">${cvText}</div>`;
   }
-  return `<div class="card ${color}"><div class="top">${card.rank}${card.suit}</div><div class="center">${card.suit}</div><div class="bottom">${card.rank}${card.suit}</div>${overlay}</div>`;
+  return `<div class="card dealt ${color}"><div class="top">${card.rank}${card.suit}</div><div class="center">${card.suit}</div><div class="bottom">${card.rank}${card.suit}</div>${overlay}</div>`;
 }
 
 function renderDealerHand(reveal) {
@@ -757,14 +1072,37 @@ function renderPlayerHands() {
   updateWinOdds();
 }
 
+let winBannerTimer = null;
+
 function setMessage(text, cls) {
   const el = document.getElementById('message');
   el.textContent = text;
   el.className = cls || '';
 }
 
+function hideWinBanner() {
+  const banner = document.getElementById('win-banner');
+  if (!banner) return;
+  banner.classList.remove('show');
+  banner.textContent = '';
+}
+
+function showWinBanner(amountWon) {
+  if (amountWon <= 0) return;
+  const banner = document.getElementById('win-banner');
+  if (!banner) return;
+  if (winBannerTimer) clearTimeout(winBannerTimer);
+  banner.classList.remove('show');
+  void banner.offsetWidth;
+  banner.textContent = `WIN +$${amountWon}`;
+  banner.classList.add('show');
+  winBannerTimer = setTimeout(() => {
+    banner.classList.remove('show');
+  }, 1250);
+}
+
 function setButtons() {
-  const inPlay = gamePhase === 'playing';
+  const inPlay = gamePhase === 'playing' && !isAnimating;
   const trainerLocked = frogTutorialEnabled && (!!frogQuestion || frogQuestionQueue.length > 0);
   const hand = playerHands[activeHandIndex] || [];
   const val = handValue(hand);
@@ -772,7 +1110,7 @@ function setButtons() {
   document.getElementById('btn-stand').disabled = trainerLocked || !inPlay;
   document.getElementById('btn-double').disabled = trainerLocked || !(inPlay && hand.length === 2 && balance >= currentBet);
   document.getElementById('btn-split').disabled = trainerLocked || !(inPlay && hand.length === 2 && hand[0].rank === hand[1].rank && !splitMode && balance >= currentBet);
-  const betting = gamePhase === 'betting' || gamePhase === 'done';
+  const betting = (gamePhase === 'betting' || gamePhase === 'done') && !isAnimating;
   document.getElementById('btn-deal').disabled = trainerLocked || !(betting && currentBet > 0);
   document.getElementById('btn-clear').style.display = betting ? '' : 'none';
   document.getElementById('btn-rebet').style.display = (betting && lastBet > 0 && currentBet === 0) ? '' : 'none';
@@ -783,20 +1121,28 @@ function addBet(amount) {
   if (gamePhase === 'done') resetRound();
   if (amount > balance) return;
   currentBet += amount; balance -= amount;
+  animateBetChips(amount, false);
   updateBalance(); setButtons();
 }
 
-function clearBet() { balance += currentBet; currentBet = 0; updateBalance(); setButtons(); }
+function clearBet() {
+  const refund = currentBet;
+  balance += currentBet; currentBet = 0;
+  animateBetChips(refund, true);
+  updateBalance(); setButtons();
+}
 
 function rebet() {
   if (gamePhase !== 'betting' && gamePhase !== 'done') return;
   if (gamePhase === 'done') resetRound();
   if (lastBet > balance) return;
   currentBet = lastBet; balance -= lastBet;
+  animateBetChips(lastBet, false);
   updateBalance(); setButtons();
 }
 
-function deal() {
+async function deal() {
+  if (isAnimating) return;
   if (frogTutorialEnabled && (frogQuestion || frogQuestionQueue.length > 0)) {
     showFrogSpeech('Answer the count prompt before the next hand.', 'mistake', 3000);
     return;
@@ -804,32 +1150,55 @@ function deal() {
   if (currentBet <= 0) return;
   const didReshuffle = checkReshuffle();
   gamePhase = 'playing'; lastBet = currentBet; splitMode = false; activeHandIndex = 0;
-  setMessage(didReshuffle ? 'New shoe - cards reshuffled.' : '');
-  dealerHand = [drawCard(), drawCard()];
-  playerHands = [[drawCard(), drawCard()]];
-  if (frogTutorialEnabled) { countCard(dealerHand[0]); countCard(playerHands[0][0]); countCard(playerHands[0][1]); updateFrogCount(); }
-  renderDealerHand(false); renderPlayerHands();
+  isAnimating = true;
+  setButtons();
+  hideWinBanner();
+  setMessage(didReshuffle ? 'New shoe - cards reshuffled.' : 'Dealing...');
+
+  await dealOpeningHands();
+  isAnimating = false;
+
   if (isBlackjack(playerHands[0]) || isBlackjack(dealerHand)) {
     renderDealerHand(true);
-    if (frogTutorialEnabled) { const rcBefore = runningCount; countCard(dealerHand[1]); announceCardDraw(dealerHand[1], 'Dealer hole card', rcBefore); }
-    if (isBlackjack(playerHands[0]) && isBlackjack(dealerHand)) { setMessage('Push!', 'push'); balance += currentBet; }
-    else if (isBlackjack(playerHands[0])) { setMessage('Blackjack!', 'win'); balance += currentBet + Math.floor(currentBet * 1.5); }
-    else setMessage('Dealer Blackjack!', 'lose');
+    if (frogTutorialEnabled) {
+      const rcBefore = runningCount;
+      countCard(dealerHand[1]);
+      updateFrogCount();
+      announceCardDraw(dealerHand[1], 'Dealer hole card', rcBefore);
+    }
+    if (isBlackjack(playerHands[0]) && isBlackjack(dealerHand)) {
+      setMessage('Push!', 'push');
+      balance += currentBet;
+      hideWinBanner();
+    } else if (isBlackjack(playerHands[0])) {
+      const blackjackWin = Math.floor(currentBet * 1.5);
+      setMessage(`Blackjack! +$${blackjackWin}`, 'win');
+      showWinBanner(blackjackWin);
+      balance += currentBet + blackjackWin;
+    } else {
+      setMessage('Dealer Blackjack!', 'lose');
+      hideWinBanner();
+    }
     endRound();
-  } else { setButtons(); updateWinOdds(); frogDealHint(); }
+  } else {
+    setMessage('');
+    setButtons();
+    updateWinOdds();
+    frogDealHint();
+  }
 }
 
-function actionHit() {
+async function actionHit() {
   if (frogTutorialEnabled && frogQuestion) {
     showFrogSpeech('Count first, then play the hand.', 'mistake', 2500);
     return;
   }
-  if (gamePhase !== 'playing') return;
+  if (gamePhase !== 'playing' || isAnimating) return;
   checkPlayerAction('hit');
   const hand = playerHands[activeHandIndex];
-  const newCard = drawCard(); hand.push(newCard);
-  if (frogTutorialEnabled) { const rcBefore = runningCount; countCard(newCard); updateFrogCount(); announceCardDraw(newCard, 'You hit', rcBefore); }
-  renderPlayerHands();
+  isAnimating = true;
+  await dealCardToHand('player', false);
+  isAnimating = false;
   const val = handValue(hand);
   if (val > 21) {
     setMessage('Bust!', 'lose');
@@ -845,6 +1214,7 @@ function completeActiveHandAuto() {
 }
 
 function actionStand() {
+  if (isAnimating) return;
   if (frogTutorialEnabled && frogQuestion) {
     showFrogSpeech('Count first, then continue.', 'mistake', 2500);
     return;
@@ -852,69 +1222,101 @@ function actionStand() {
   completeActiveHandAuto();
 }
 
-function actionDouble() {
+async function actionDouble() {
   if (frogTutorialEnabled && frogQuestion) {
     showFrogSpeech('Count first, then continue.', 'mistake', 2500);
     return;
   }
-  if (gamePhase !== 'playing' || balance < currentBet) return;
+  if (gamePhase !== 'playing' || balance < currentBet || isAnimating) return;
   checkPlayerAction('double');
-  balance -= currentBet; currentBet *= 2; updateBalance();
+  const extraBet = currentBet;
+  balance -= currentBet; currentBet *= 2;
+  animateBetChips(extraBet, false);
+  updateBalance();
   const hand = playerHands[activeHandIndex];
-  const newCard = drawCard(); hand.push(newCard);
-  if (frogTutorialEnabled) { const rcBefore = runningCount; countCard(newCard); updateFrogCount(); announceCardDraw(newCard, 'Double down', rcBefore); }
-  renderPlayerHands();
+  isAnimating = true;
+  await dealCardToHand('player', false);
+  isAnimating = false;
   const val = handValue(hand);
   if (val > 21) setMessage('Bust!', 'lose');
   completeActiveHandAuto();
 }
 
-function actionSplit() {
+async function actionSplit() {
   if (frogTutorialEnabled && frogQuestion) {
     showFrogSpeech('Count first, then continue.', 'mistake', 2500);
     return;
   }
-  if (gamePhase !== 'playing' || balance < currentBet) return;
+  if (gamePhase !== 'playing' || balance < currentBet || isAnimating) return;
   checkPlayerAction('split');
-  balance -= currentBet; updateBalance();
+  balance -= currentBet;
+  animateBetChips(currentBet, false);
+  updateBalance();
   const hand = playerHands[0];
   splitMode = true;
-  playerHands = [[hand[0], drawCard()], [hand[1], drawCard()]];
-  if (frogTutorialEnabled) {
-    let rcBefore = runningCount;
-    countCard(playerHands[0][1]);
-    announceCardDraw(playerHands[0][1], 'Split draw hand 1', rcBefore);
-    rcBefore = runningCount;
-    countCard(playerHands[1][1]);
-    announceCardDraw(playerHands[1][1], 'Split draw hand 2', rcBefore);
-    updateFrogCount();
-  }
-  renderPlayerHands(); setButtons();
+  playerHands = [[hand[0]], [hand[1]]];
+  renderPlayerHands();
+  isAnimating = true;
+  activeHandIndex = 0;
+  await dealCardToHand('player', false);
+  activeHandIndex = 1;
+  await dealCardToHand('player', false);
+  activeHandIndex = 0;
+  isAnimating = false;
+  setButtons();
 }
 
-function dealerTurn() {
-  gamePhase = 'dealer'; renderDealerHand(true);
-  if (frogTutorialEnabled) { const rcBefore = runningCount; countCard(dealerHand[1]); announceCardDraw(dealerHand[1], 'Dealer reveal', rcBefore); }
+async function dealerTurn() {
+  gamePhase = 'dealer';
+  renderDealerHand(true);
+  if (frogTutorialEnabled) {
+    const rcBefore = runningCount;
+    countCard(dealerHand[1]);
+    updateFrogCount();
+    announceCardDraw(dealerHand[1], 'Dealer reveal', rcBefore);
+  }
   if (playerHands.every(h => handValue(h) > 21)) { resolveRound(); return; }
-  function draw() {
+  isAnimating = true;
+  while (true) {
     const val = handValue(dealerHand), soft = isSoft(dealerHand);
     if (val < 17 || (val === 17 && soft)) {
-      const c = drawCard(); dealerHand.push(c);
-      if (frogTutorialEnabled) { const rcBefore = runningCount; countCard(c); announceCardDraw(c, 'Dealer hit', rcBefore); } renderDealerHand(true); setTimeout(draw, 500);
-    } else resolveRound();
+      await dealCardToHand('dealer', false);
+      renderDealerHand(true);
+    } else break;
   }
-  setTimeout(draw, 500);
+  isAnimating = false;
+  resolveRound();
 }
 
 function resolveRound() {
   const dVal = handValue(dealerHand);
-  playerHands.forEach((hand, idx) => {
+  let totalWon = 0;
+  let wins = 0;
+  let pushes = 0;
+
+  playerHands.forEach((hand) => {
     const pVal = handValue(hand);
     if (pVal > 21) return;
-    if (dVal > 21 || pVal > dVal) balance += currentBet * 2;
-    else if (pVal === dVal) balance += currentBet;
+    if (dVal > 21 || pVal > dVal) {
+      balance += currentBet * 2;
+      totalWon += currentBet;
+      wins++;
+    } else if (pVal === dVal) {
+      balance += currentBet;
+      pushes++;
+    }
   });
-  setMessage(playerHands.length > 1 ? 'Round Complete' : (handValue(playerHands[0]) > 21 ? 'Bust!' : 'Round Complete'));
+
+  if (totalWon > 0) {
+    setMessage(`WIN +$${totalWon}`, 'win');
+    showWinBanner(totalWon);
+  } else if (pushes > 0 && wins === 0) {
+    setMessage('Push!', 'push');
+    hideWinBanner();
+  } else {
+    setMessage(playerHands.length > 1 ? 'Round Complete' : (handValue(playerHands[0]) > 21 ? 'Bust!' : 'Round Complete'));
+    hideWinBanner();
+  }
   endRound();
 }
 
@@ -930,6 +1332,7 @@ function resetRound() {
   gamePhase = 'betting'; dealerHand = []; playerHands = [[]]; splitMode = false; activeHandIndex = 0;
   frogQuestion = null;
   frogQuestionQueue = [];
+  hideWinBanner();
   setMessage(''); renderDealerHand(false); renderPlayerHands(); updateBalance(); setButtons(); renderFrogTrainer();
 }
 
